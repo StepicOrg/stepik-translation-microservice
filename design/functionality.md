@@ -1,13 +1,13 @@
 ## MVP
 
 * models for translation service, Azure, Yandex, Google
-* model Translated and inherit from it: translated step, lesson, unit
+* model Translated and inherit from it: translated step and lesson
 * get translated by pk + pagination
 * test accuracy of Azure, Yandex, Google
 * get used langages in project
 * choose 1 course and make full translation
 * tests for API
-* redis for storing steps
+* redis for storing steps and postgresql for storing lessons
 * post request `update` and `create` translation
 
 ## Desirable functionality
@@ -33,3 +33,5 @@
 
 ### Useful links:
 * https://webtranslateit.com/en/plans
+* https://m.facebook.com/story.php?story_fbid=1588220927918553&id=100001919820828
+* https://github.com/StepicOrg/summary/tree/master/recognition
