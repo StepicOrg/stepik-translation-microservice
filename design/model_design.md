@@ -9,7 +9,7 @@ This is primary interface model in the system, describing API methods, which eac
 **Fields**
 * API_KEY (string)
 * BASE_URL (string)
-* price per 1000 symbols (integer)
+* price dict where stores prices for different ranges.
 * api version (float)
 * limit_free_count_symbols (integer)
 * symbols_translated (integer)
@@ -41,7 +41,7 @@ This is primary model, which will be facade for whole microservice and store all
 
 **Methods** 
 - add_translated_service
-- deletetranslated__service
+- delete_translated_service
 
 Actually it only has some setters/getters and views, where methods from `TranslationService` are called with specific service type.
 
