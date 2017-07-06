@@ -35,9 +35,6 @@ class YandexTranslator:
         final_url = ''.join([final_url, "?{0}={1}".format("key", self.api_key)])
         final_url = ''.join([final_url, "&{0}={1}".format("text", step["block"]["text"])])
         for name, value in kwargs.items():
-           if name == "lang":
-               final_url = ''.join([final_url, "&{0}={1}".format(name, value)])
-           elif name == "format":
                final_url = ''.join([final_url, "&{0}={1}".format(name, value)])
         response = requests.get(final_url).json()
         return response['text']
@@ -48,7 +45,7 @@ step_id = 0
 if len(sys.argv) == 2:
     step_id = sys.argv[1]
 else:
-    print("Error, enter course_id")
+    print("Error, enter step_id")
     exit(0)
 
 translator = YandexTranslator()

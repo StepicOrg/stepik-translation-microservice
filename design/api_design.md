@@ -6,5 +6,5 @@
 
 
 **POST**:
-- `api/update_translation/?type=<>&lang=<>&lang=<>&pk=<>&new_text` - method, which updates steps[pk] in `lang` from `type` service with `new_text`
-- `api/create_translation/?type=<>&lang=<>&lang=<>&pk=<>&new_text` - method, which creates steps[pk] in `lang` from `type` service with `new_text`
+- `api/update_translation/?type=<>&lang=<>&pk=<>&new_text` - method, which updates steps[pk] in `lang` from `type` service with `new_text`
+- `api/create_translation/?type=<>&lang=<>&pk=<>&new_text` - method, which creates steps[pk] in `lang` from `type` service with `new_text`
