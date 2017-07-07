@@ -1,3 +1,9 @@
 from django.db import models
+import environ
 
-# Create your models here.
+class ApiController(models.Model):
+    api_key =
+    base_url = models.CharField()
+    api_version = 0.1
+
+
