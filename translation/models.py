@@ -1,7 +1,8 @@
 from django.db import models
-
 from api_controller.models import ApiController
+from django.contrib.postgres.fields import JSONField
 from django.conf import settings
+
 import requests
 import json
 
@@ -22,7 +23,7 @@ class TranslationService(models.Model):
     def get_lesson(self, pk, lang):
         pass
 
-    def get_step(self, pk, lang, type):
+    def get_step(self, pk, lang):
         pass
 
     def get_available_languages(self):
@@ -50,8 +51,11 @@ class Translation(models.Model):
 
 
 class TranslationStep(Translation):
-    pass
+    lesson = models.ForeignKey(TranslatedLesson, on_delete=models.CASCADE, related_name="lessons")
 
+class TranslatedLesson(Translation):
+    stepik_id = models.IntegerField()
+    translated_json = JSONField()
 
 class YandexTranslator(models.Model):
     base_url = "https://translate.yandex.net/api/v1.5/tr.json/translate"
@@ -63,7 +67,9 @@ class YandexTranslator(models.Model):
         related_name="translation_services"
     )
 
-    # @returns TranslationStep object
+    # :param pk: step's stepik_id
+    # :param text: step's text in html format
+    # :returns: TranslationStep object
     def get_step(self, pk, text, **kwargs):
         if TranslationStep.objects.filter(pk=pk).exists():
             return TranslationStep.objects.filter(pk=pk)[0]
@@ -79,10 +85,25 @@ class YandexTranslator(models.Model):
             # TODO research if needed
             newly_translated_step.save()
             return newly_translated_step
+
     def get_available_language(self):
         all_steps = TranslationStep.objects.all()
         unique_languages = {}
-        for step in all_steps:
+        # http://blog.etianen.com/blog/2013/06/08/django-querysets/
+        for step in all_steps.iterator():
             if step.lang not in unique_languages:
                 unique_languages.add(step)
-        response = json.dumps(list(unique_languages))
+        return json.dumps(list(unique_languages))
+
+    def get_lesson(self, pk, text, lang, **kwargs):
+        if TranslatedLesson.objects.filter(pk=pk).exists():
+            return TranslatedLesson.objects.filter(pk=pk)[0]
+        else:
+            steps = TranslatedLesson.objects.filter(pk=pk)
+            translated_steps = dict()
+            for step in steps:
+                if step.text step.lang == lang:
+                    translated_steps[step.stepik_id] = step
+            # TODO make fucntion
+            return true
+    def update_text(self, pk, text, ):
