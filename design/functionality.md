@@ -7,7 +7,7 @@
 * get used langages in project
 * choose 1 course and make full translation
 * tests for API
-* redis for storing steps and postgresql for storing lessons
+* postgresql for storing lessons, steps
 * post request `update` and `create` translation
 
 ## Desirable functionality
@@ -24,6 +24,7 @@
 * linter + travis
 * landing page for suggesting translations
 * use 3-rd party service for mistake correction
+* translate schemes, ru->all (yandex), es->en(google)
 
 ## Future
 
