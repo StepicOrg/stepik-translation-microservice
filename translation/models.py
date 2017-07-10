@@ -1,5 +1,5 @@
 from django.db import models
-from api_controller.models import ApiController
+from api_controller.models import ApiControllerApiController
 from django.contrib.postgres.fields import JSONField
 from django.conf import settings
 
@@ -17,10 +17,13 @@ class TranslationService(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     base_url = models.CharField()
     api_version = models.FloatField()
+    service_name = models.CharField()
     translated_symbols = models.IntegerField()
     api_key = models.CharField()
+    count_steps = models.IntegerField()
 
     def get_lesson(self, pk, lang):
+        #TODO change all to "NotImplementedError"
         pass
 
     def get_step(self, pk, lang):
@@ -48,7 +51,7 @@ class Translation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     lang = models.CharField(blank=False)
     text = models.CharField(blank=False)
-
+    service_name = models.CharField()
 
 class TranslationStep(Translation):
     lesson = models.ForeignKey(TranslatedLesson, on_delete=models.CASCADE, related_name="lessons")
@@ -57,7 +60,10 @@ class TranslatedLesson(Translation):
     stepik_id = models.IntegerField()
     translated_json = JSONField()
 
+
+
 class YandexTranslator(models.Model):
+
     base_url = "https://translate.yandex.net/api/v1.5/tr.json/translate"
     api_version = 1.5
     api_key = settings.YANDEX_API_KEY
@@ -86,7 +92,7 @@ class YandexTranslator(models.Model):
             newly_translated_step.save()
             return newly_translated_step
 
-    def get_available_language(self):
+    def get_available_languages(self):
         all_steps = TranslationStep.objects.all()
         unique_languages = {}
         # http://blog.etianen.com/blog/2013/06/08/django-querysets/
@@ -104,6 +110,6 @@ class YandexTranslator(models.Model):
             for step in steps:
                 if step.text step.lang == lang:
                     translated_steps[step.stepik_id] = step
-            # TODO make fucntion
+            # TODO make function
             return true
     def update_text(self, pk, text, ):
