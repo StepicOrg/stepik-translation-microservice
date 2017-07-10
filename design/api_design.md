@@ -2,7 +2,7 @@
 
 * `api/translate?type=<>&lang=<>&pk=<>` - translate any type of object with given lang with pk
 * `api/translate_ratio?type=<>&lang=<>&pk=<>` - provides translated ratio for any type of object with given lang with pk
-* `api/available_languages?type=<>&pk=<>` - provides array of available languages for specific object with pk
+* `api/available_languages?type=<>&pk=<>` - provides array of available languages for specific object with pk if ratio of language >=1%
 
 
 **POST**:
