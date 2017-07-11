@@ -4,7 +4,7 @@ from django.conf import settings
 
 class ApiController(models.Model):
     api_key = settings.STEPIK_API_KEY
-    base_url = models.CharField()
+    base_url = models.TextField()
     api_version = 0.1
 
     def get_translation(self, obj_type, service_name, pk, lang):

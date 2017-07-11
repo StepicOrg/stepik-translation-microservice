@@ -32,6 +32,8 @@ INSTALLED_APPS = [
 
     # Apps:
     'translation_microservice',
+    'api_controller',
+    'translation'
 ]
 
 MIDDLEWARE = [
@@ -118,8 +120,9 @@ STATIC_URL = '/static/'
 
 YANDEX_API_KEY = env("YANDEX_API_KEY")
 
-GOOGLE_API_KEY = env("GOOGLE_API_KEY")
+# TODO change to normal behavior
+GOOGLE_API_KEY = env("GOOGLE_API_KEY", default="zero")
 
-AZURE_API_KEY = env("AZURE_API_KEY")
+AZURE_API_KEY = env("AZURE_API_KEY", default="zero")
 
-STEPIK_API_KEY = env("STEPIK_API_KEY")
+STEPIK_API_KEY = env("STEPIK_API_KEY", default="zero")
