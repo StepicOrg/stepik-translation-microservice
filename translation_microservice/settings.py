@@ -118,11 +118,13 @@ STATIC_URL = '/static/'
 
 # Credentials for translate services
 
-YANDEX_API_KEY = env("YANDEX_API_KEY")
+YANDEX_API_KEY = env("YANDEX_API_KEY", default="")
 
 # TODO change to normal behavior
-GOOGLE_API_KEY = env("GOOGLE_API_KEY", default="zero")
+GOOGLE_API_KEY = env("GOOGLE_API_KEY", default="")
 
-AZURE_API_KEY = env("AZURE_API_KEY", default="zero")
+AZURE_API_KEY = env("AZURE_API_KEY", default="")
 
-STEPIK_API_KEY = env("STEPIK_API_KEY", default="zero")
+STEPIK_CLIENT_ID = env("STEPIK_CLIENT_ID", default="")
+
+STEPIK_CLIENT_SECRET = env("STEPIK_CLIENT_SECRET", default="")
