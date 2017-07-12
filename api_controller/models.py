@@ -3,7 +3,11 @@ from django.conf import settings
 
 
 class ApiController(models.Model):
-    api_key = settings.STEPIK_API_KEY
+    api_key = 0
+    oauth_credentials = (
+        ("client_id", settings.STEPIK_CLIENT_ID),
+        ("client_secret", settings.STEPIK_CLIENT_SECRET)
+    )
     base_url = models.TextField()
     api_version = 0.1
 
