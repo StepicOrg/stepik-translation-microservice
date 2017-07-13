@@ -12,11 +12,11 @@ class ApiController(models.Model):
     api_version = 0.1
 
     def get_translation(self, obj_type, service_name, pk, lang):
-        translation_service = self.translation_services.filter(service_name=service_name)
+        translation_service = self.translation_services.all()[0]
         if obj_type == "lesson":
             result = translation_service.get_lesson(pk, lang)
         else:
-            result = translation_service.get_step(pk, lang)
+            result = translation_service.get_step_translation(pk, lang)
         # TODO make json serializer
         return result
 
@@ -32,5 +32,5 @@ class ApiController(models.Model):
         # TODO make json serializer
         return
 
-    def get_translation_ratio(self, obj_type, pk):
-        self.translation_service.get_translation_ratio(obj_type, )
+        # def get_translation_ratio(self, obj_type, pk):
+        #    self.translation_service.get_translation_ratio(obj_type, )

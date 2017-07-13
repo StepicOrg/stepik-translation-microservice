@@ -98,6 +98,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Rest framework
+REST_FRAMEWORK = {
+    'PAGE_SIZE': 10
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
@@ -125,6 +130,6 @@ GOOGLE_API_KEY = env("GOOGLE_API_KEY", default="")
 
 AZURE_API_KEY = env("AZURE_API_KEY", default="")
 
-STEPIK_CLIENT_ID = env("STEPIK_CLIENT_ID", default="")
+STEPIK_CLIENT_ID = env("STEPIK_CLIENT_ID")
 
-STEPIK_CLIENT_SECRET = env("STEPIK_CLIENT_SECRET", default="")
+STEPIK_CLIENT_SECRET = env("STEPIK_CLIENT_SECRET")
