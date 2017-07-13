@@ -1,6 +1,5 @@
 from django.db import models
 from api_controller.models import ApiController
-from django.contrib.postgres.fields import JSONField
 from django.conf import settings
 
 import requests
@@ -15,7 +14,7 @@ class TranslationService(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    service_name = models.CharField()
+    service_name = models.CharField(max_length=40)
     base_url = models.CharField()
     api_version = models.FloatField()
     api_key = models.CharField()
@@ -23,20 +22,19 @@ class TranslationService(models.Model):
     count_steps = models.IntegerField()
 
     def get_step_translation(self, pk, lang, lesson):
-        pass
+        raise NotImplementedError
 
     def create_step_translation(self, pk, lang, type):
-        pass
+        raise NotImplementedError
 
     def update_step_translation(self, pk, lang, new_text):
-        pass
+        raise NotImplementedError
 
     def get_lesson_translated_steps(self, pk, lang):
-        # TODO change all to "NotImplementedError"
-        pass
+        raise NotImplementedError
 
     def get_available_languages(self):
-        pass
+        raise NotImplementedError
 
     def get_translation_ratio(self, lang, type_object, type_object_id):
         pass
@@ -67,6 +65,7 @@ class TranslationStep(Translation):
 
 class YandexTranslator(TranslationService):
     base_url = "https://translate.yandex.net/api/v1.5/tr.json/translate"
+    service_name = "YANDEX"
     api_version = 1.5
     api_key = settings.YANDEX_API_KEY
     api_controller = models.ForeignKey(
