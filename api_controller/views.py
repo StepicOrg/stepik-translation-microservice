@@ -7,6 +7,7 @@ from rest_framework import status
 from translation.models import TranslationStep
 from api_controller.models import ApiController
 from rest_framework import generics
+import json
 
 #
 # class Translation(generics.RetrieveAPIView):
@@ -38,10 +39,14 @@ class Translation(APIView):
         try:
             return TranslationStep.objects.get(pk=pk)
         except TranslationStep.DoesNotExist:
-            raise Http404
+            return None
 
     def get(self, request, pk, format=None):
         step = self.get_object(pk)
+        dict1 = {}
+        dict1["detail"] = "Not found."
+        if step is None:
+            return Response({'please move along': 'nothing to see here'}, status=status.HTTP_404_NOT_FOUND)
         serializer = TranslationStepSerializer(step)
         data = serializer.data
         if self.request.query_params.get("lang"):
