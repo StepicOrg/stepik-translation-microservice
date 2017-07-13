@@ -1,10 +1,27 @@
-**GET**:
+**/api/translate**
 
-* `api/translate?type=<>&lang=<>&pk=<>` - translate any type of object with given lang with pk
-* `api/translate_ratio?type=<>&lang=<>&pk=<>` - provides translated ratio for any type of object with given lang with pk
-* `api/available_languages?type=<>&pk=<>` - provides array of available languages for specific object with pk if ratio of language >=1%
+public:
+
+* *GET* `lessons/?page=<>&lang=<>&translation_service=<>` - get all lessons
+* *GET* `lessons/<stepik_id>/?lang=<>&translation_service=<>` - get specific lesson
+* *GET* `steps/?page=<>&lang=<>&translation_service=<>` - get all translated steps
+* *GET* `steps/<stepik_id>/?lang=<>&translation_service=<>` - get specific step
+
+private:
+
+* *UPDATE* `steps/<stepik_id>/?lang=<>&text=<>&translation_service=<>` - update translated step's text
+* *POST* `steps/<stepik_id>/?lang=<>&text=<>&translation_service=<>` - create translated step's text
 
 
-**POST**:
-- `api/update_translation/?type=<>&lang=<>&pk=<>&new_text` - method, which updates steps[pk] in `lang` from `type` service with `new_text`
-- `api/create_translation/?type=<>&lang=<>&pk=<>&new_text` - method, which creates steps[pk] in `lang` from `type` service with `new_text`
+**/api/translation-ratio**
+* *GET* `lesson/<stepik_id>/?lang=<>&translation_service=<>` - get `translation_ratio` of specific lesson
+* *GET* `course/<stepik_id>/?lang=<>&translation_service=<>` - get `translation_ratio` of specific course
+
+**/api/available-languages**
+* *GET* `courses/<stepik_id>/?translation_service=<>` - get `available-languages` for course
+* *GET* `lessons/<stepik_id>/translation_service=<>` - get `available-languages` for lesson
+* *GET* `steps/<stepik_id>/?translation_service=<>` - get `available-languages` for step
+
+
+Optional params for requests: `lang` and `translation_service`
+Future support: `ids`
