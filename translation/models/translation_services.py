@@ -1,12 +1,10 @@
+from .translation import TranslationStep, TranslatedLesson
 from django.db import models
-from api_controller.models import ApiController
 from django.conf import settings
 
 import requests
 import json
 
-
-# Abstract classes
 
 class TranslationService(models.Model):
     class Meta:
@@ -40,34 +38,12 @@ class TranslationService(models.Model):
         pass
 
 
-class Translation(models.Model):
-    class Meta:
-        abstract = True
-
-    stepik_id = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    lang = models.CharField(max_length=10, blank=False)
-    text = models.TextField(blank=False)
-    service_name = models.CharField(max_length=40)
-
-
-class TranslatedLesson(models.Model):
-    stepik_id = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    service_name = models.CharField(max_length=40)
-
-
-class TranslationStep(Translation):
-    lesson = models.ForeignKey(TranslatedLesson, on_delete=models.CASCADE, related_name="steps")
-
-
 class YandexTranslator(TranslationService):
     base_url = "https://translate.yandex.net/api/v1.5/tr.json/translate"
     service_name = "YANDEX"
     api_version = 1.5
     api_key = settings.YANDEX_API_KEY
+    from api_controller.models import ApiController
     api_controller = models.ForeignKey(
         ApiController,
         on_delete=models.CASCADE,

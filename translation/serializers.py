@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from translation.models import TranslationStep
+from translation.models import TranslatedLesson
 
 
 class TranslationStepSerializer(serializers.ModelSerializer):
@@ -11,5 +12,5 @@ class TranslationStepSerializer(serializers.ModelSerializer):
 
 class TranslatedLessonSerializer(serializers.ModelSerializer):
     class Meta:
-        model = TranslationStep
+        model = TranslatedLesson
         fields = ("stepik_id", "created_at", "updated_at", "service_name")

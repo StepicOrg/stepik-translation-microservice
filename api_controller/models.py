@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 import requests
 
+
 class ApiController(models.Model):
     api_key = 0
     oauth_credentials = {
@@ -40,20 +41,25 @@ class ApiController(models.Model):
     def fetch_stepik_lesson(self, pk):
         return self.fetch_stepik_object("lesson", pk)
 
-    def get_translation(self, obj_type, service_name, pk, lang):
+    def get_translation(self, obj_type, pk, service_name=None,lang=None):
+
+        print(service_name)
         service_class = self.translation_name_dict[service_name]
         translation_service = None
         for service in self.translation_services.all():
-            # TODO replace eval
+            from translation.models import YandexTranslator
             if isinstance(service, eval(service_class)):
                 translation_service = service
                 break
 
-        if obj_type == "lesson":
-            result = translation_service.get_lesson(pk, lang)
-        else:
+
+        if obj_type == "lessons":
+            result = translation_service.get_lesson_translated_steps(pk, lang)
+        elif obj_type == "steps":
             result = translation_service.get_step_translation(pk, lang)
-        # TODO make json serializer
+        else:
+            result = None
+
         return result
 
     def get_available_languages(self, obj_type, service_name, pk):
