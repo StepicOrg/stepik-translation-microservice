@@ -1,5 +1,8 @@
 from django.db import models
 from django.conf import settings
+from translation.models import TranslatedLesson, TranslationStep
+from translation.models import YandexTranslator
+
 import requests
 
 
@@ -41,25 +44,35 @@ class ApiController(models.Model):
     def fetch_stepik_lesson(self, pk):
         return self.fetch_stepik_object("lesson", pk)
 
-    def get_translation(self, obj_type, pk, service_name=None,lang=None):
-
-        print(service_name)
-        service_class = self.translation_name_dict[service_name]
-        translation_service = None
-        for service in self.translation_services.all():
-            from translation.models import YandexTranslator
-            if isinstance(service, eval(service_class)):
-                translation_service = service
-                break
-
-
-        if obj_type == "lessons":
-            result = translation_service.get_lesson_translated_steps(pk, lang)
-        elif obj_type == "steps":
-            result = translation_service.get_step_translation(pk, lang)
+    def get_translation(self, obj_type, pk, service_name=None, lang=None):
+        result = None
+        if service_name is None:
+            if obj_type == "steps":
+                if lang is None:
+                    result = TranslationStep.objects.filter(stepik_id=pk)
+                else:
+                    result = TranslationStep.objects.filter(stepik_id=pk, lang=lang)
+            elif obj_type == "lessons":
+                if lang is None:
+                    result = TranslatedLesson.objects.filter(stepik_id=pk)
+                else:
+                    result = TranslatedLesson.objects.filter(stepik_id=pk, lang=lang)
         else:
-            result = None
+            service_class = self.translation_name_dict[service_name]
+            translation_service = None
+            for service in self.translation_services.all():
 
+                if isinstance(service, eval(service_class)):
+                    translation_service = service
+                    break
+            if translation_service is not None:
+                if obj_type == "lessons":
+                    result = translation_service.get_lesson_translated_steps(pk, lang)
+                elif obj_type == "steps":
+                    print("crazy", pk, lang)
+                    result = translation_service.get_step_translation(pk, lang)
+        if result is None or result.exists() == 0:
+            return None
         return result
 
     def get_available_languages(self, obj_type, service_name, pk):

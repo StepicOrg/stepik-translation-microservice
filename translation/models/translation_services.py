@@ -43,9 +43,8 @@ class YandexTranslator(TranslationService):
     service_name = "YANDEX"
     api_version = 1.5
     api_key = settings.YANDEX_API_KEY
-    from api_controller.models import ApiController
     api_controller = models.ForeignKey(
-        ApiController,
+        'api_controller.ApiController',
         on_delete=models.CASCADE,
         related_name="translation_services"
     )
@@ -55,8 +54,11 @@ class YandexTranslator(TranslationService):
     # :returns: TranslationStep object or None
     def get_step_translation(self, pk, lang, **kwargs):
         # TODO can we optimize request?
-        if TranslationStep.objects.filter(pk=pk, lang=lang).exists():
-            return TranslationStep.objects.filter(pk=pk, lang=lang)[0]
+        if lang is None and TranslationStep.objects.filter(stepik_id=pk).exists():
+            return TranslationStep.objects.filter(stepik_id=pk)
+        elif TranslationStep.objects.filter(stepik_id=pk, lang=lang).exists():
+            print(TranslationStep.objects.filter(stepik_id=pk, lang=lang))
+            return TranslationStep.objects.filter(stepik_id=pk, lang=lang)
         else:
             return None
 
