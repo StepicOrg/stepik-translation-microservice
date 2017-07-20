@@ -3,6 +3,10 @@ from rest_framework.views import APIView
 from rest_framework import status
 from api_controller.models import ApiController
 from translation.serializers import TranslationStepSerializer
+from translation.models import TranslationStep
+import collections
+from rest_framework.generics import ListAPIView
+from rest_framework.pagination import PageNumberPagination
 
 
 class Translation(APIView):
@@ -19,7 +23,6 @@ class Translation(APIView):
         if self.request.query_params.get("lang"):
             lang = self.request.query_params.get("lang")
 
-        print(lang, service_name, pk)
         data = api_controller.get_translation(obj_type, pk, service_name, lang)
 
         if data is None:
@@ -34,3 +37,31 @@ class Translation(APIView):
     def error_response(self, number_error):
         if number_error == 404:
             return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class BasicPagination(PageNumberPagination):
+    page_size = 3
+    page_size_query_param = 'page_size'
+    max_page_size = 20
+
+    def get_paginated_response(self, data):
+        has_next, has_previous = False, False
+        if self.get_next_link():
+            has_next = True
+        if self.get_previous_link():
+            has_previous = True
+
+        meta = collections.OrderedDict([
+            ('page', self.page.number),
+            ('has_next', has_next),
+            ('has_previous', has_previous),
+        ])
+        ret = collections.OrderedDict(meta=meta)
+        ret['results'] = data
+        return Response(ret)
+
+
+class Translations(ListAPIView):
+    queryset = TranslationStep.objects.all()
+    serializer_class = TranslationStepSerializer
+    pagination_class = BasicPagination
