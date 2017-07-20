@@ -57,7 +57,6 @@ class YandexTranslator(TranslationService):
         if lang is None and TranslationStep.objects.filter(stepik_id=pk).exists():
             return TranslationStep.objects.filter(stepik_id=pk)
         elif TranslationStep.objects.filter(stepik_id=pk, lang=lang).exists():
-            print(TranslationStep.objects.filter(stepik_id=pk, lang=lang))
             return TranslationStep.objects.filter(stepik_id=pk, lang=lang)
         else:
             return None

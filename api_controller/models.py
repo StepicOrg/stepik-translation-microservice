@@ -58,7 +58,11 @@ class ApiController(models.Model):
                 else:
                     result = TranslatedLesson.objects.filter(stepik_id=pk, lang=lang)
         else:
-            service_class = self.translation_name_dict[service_name]
+            # TODO make normal check
+            if service_name in self.translation_name_dict:
+                service_class = self.translation_name_dict[service_name]
+            else:
+                return None
             translation_service = None
             for service in self.translation_services.all():
 
@@ -69,7 +73,6 @@ class ApiController(models.Model):
                 if obj_type == "lessons":
                     result = translation_service.get_lesson_translated_steps(pk, lang)
                 elif obj_type == "steps":
-                    print("crazy", pk, lang)
                     result = translation_service.get_step_translation(pk, lang)
         if result is None or result.exists() == 0:
             return None
@@ -86,6 +89,5 @@ class ApiController(models.Model):
             result = self.translation_services.filter(pk=pk)
         # TODO make json serializer
         return
-
         # def get_translation_ratio(self, obj_type, pk):
         #    self.translation_service.get_translation_ratio(obj_type, )
