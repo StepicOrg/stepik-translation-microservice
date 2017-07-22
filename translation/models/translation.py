@@ -21,4 +21,4 @@ class TranslatedLesson(models.Model):
 
 
 class TranslationStep(Translation):
-    lesson = models.ForeignKey(TranslatedLesson, on_delete=models.CASCADE, related_name="steps")
+    lesson = models.ForeignKey(TranslatedLesson, on_delete=models.CASCADE, related_name="steps", blank=True)

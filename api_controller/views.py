@@ -34,6 +34,28 @@ class Translation(APIView):
                 serializer = TranslationStepSerializer(data[0])
             return Response(serializer.data)
 
+    def post(self, request, obj_type, pk, format=None):
+        service_name, lang = None, None
+        api_controller = ApiController.objects.filter(id=1)[0]
+        api_controller.stepik_ouath()
+
+        if self.request.query_params.get("service_name"):
+            service_name = self.request.query_params.get("service_name")
+        if self.request.query_params.get("lang"):
+            lang = self.request.query_params.get("lang")
+
+        print("POST METHOD", obj_type, pk, service_name, lang)
+        created_translation = api_controller.create_translation(obj_type, pk, service_name, lang)
+        print("AZAZA", created_translation)
+        if created_translation.count() > 1:
+            serializer = TranslationStepSerializer(list(created_translation), many=True)
+        else:
+            serializer = TranslationStepSerializer(created_translation[0])
+        return Response(serializer.data)
+
+
+
+
     def error_response(self, number_error):
         if number_error == 404:
             return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
