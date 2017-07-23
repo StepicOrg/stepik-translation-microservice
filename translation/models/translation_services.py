@@ -61,11 +61,10 @@ class YandexTranslator(TranslationService):
         else:
             return None
 
-    # :param pk: step's stepik_id
-    # :param lang: step's lang
     # :param text: step's text in html format
+    # :param lang: step's lang
     # :returns: TranslationStep object or None
-    def create_step_translation(self, pk, text, **kwargs):
+    def create_step_translation(self, text, **kwargs):
         final_url = self.base_url
         params = ["?{0}={1}".format("key", self.api_key), "&{0}={1}".format("text", text)]
         for name, value in kwargs.items():
@@ -74,17 +73,15 @@ class YandexTranslator(TranslationService):
         response = requests.get(final_url + "".join(params)).json()
         return response['text']
 
-
-
     # :param pk: step's stepik_id
     # :param new_text: new translation of step's text
     # :param lang: step's lang
     # :returns: True or False
     def update_step_translation(self, pk, lang, new_text):
-        if TranslationStep.objects.filter(pk=pk, lang=lang).exidsts():
+        if TranslationStep.objects.filter(pk=pk, lang=lang).exists():
             step = TranslationStep.objects.filter(pk=pk, lang=lang)[0]
         else:
-            step = self.create_step_translation(pk, lang)
+            step = self.create_step_translation(new_text, lang=lang)
         step.text = new_text
         step.save()
         return True
@@ -120,8 +117,17 @@ class YandexTranslator(TranslationService):
                 ids.append(step)
             return json.dumps(ids)
 
-    def get_translated_lesson(self, pk, lang):
-        pass
+    def create_lesson_translation(self, pk, ids, texts, lang):
+        lesson = TranslatedLesson.objects.get(stepik_id=pk)
+        for id, i in enumerate(ids):
+            if TranslationStep.objects.get(stepik_id=id, lang=lang).count() > 0:
+                step = TranslationStep.objects.get(stepik_id=id, lang=lang)
+                step.lesson = lesson
+                step.save()
+            else:
+                translated_text = self.create_step_translation(texts[i], lang=lang)
+                TranslationStep.objects.create(stepik_id=id, lang=lang, text=translated_text, lesson=lesson,
+                                               service_name="yandex")
 
     # :returns: json of languages used in step's translation
     def get_available_languages(self):
@@ -133,5 +139,12 @@ class YandexTranslator(TranslationService):
                 unique_languages.add(step.lang)
         return json.dumps(list(unique_languages))
 
-    def get_translation_ratio(self):
-        pass
+    def get_translation_ratio(self, pk, obj_type, lang):
+        if obj_type == "lesson":
+            lesson = TranslatedLesson.objects.get(stepik_id=pk)
+            count_steps = len(lesson.steps)
+            translated = 0
+            for step in lesson.step:
+                if step.lang == lang:
+                    translated += 1
+            return translated / count_steps

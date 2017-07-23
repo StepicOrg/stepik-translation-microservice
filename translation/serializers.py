@@ -13,4 +13,4 @@ class TranslatedLessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = TranslatedLesson
         fields = ("stepik_id", "created_at", "updated_at", "service_name")
-        # TODO add complex serializer for lessons
+        steps = TranslationStepSerializer(many=True)

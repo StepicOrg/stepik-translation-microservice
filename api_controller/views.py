@@ -7,7 +7,7 @@ from translation.models import TranslationStep
 import collections
 from rest_framework.generics import ListAPIView, ListCreateAPIView
 from rest_framework.pagination import PageNumberPagination
-
+from rest_framework import serializers
 
 class Translation(APIView):
     """
@@ -106,3 +106,22 @@ class Translations(ListAPIView):
     queryset = TranslationStep.objects.all()
     serializer_class = TranslationStepSerializer
     pagination_class = BasicPagination
+
+
+class TranslationalRatio(APIView):
+    def get(self, request, obj_type, pk, format=None):
+        api_controller = ApiController.objects.filter(id=1)[0]
+        service_name, lang = None, None
+
+        if self.request.query_params.get("service_name"):
+            service_name = self.request.query_params.get("service_name")
+        if self.request.query_params.get("lang"):
+            lang = self.request.query_params.get("lang")
+
+        data = api_controller.get_translational_ratio(pk, obj_type, lang, service_name)
+
+        if data is None:
+            return self.error_response(404)
+        else:
+            serializer = serializers.FloatField(data)
+            return Response(serializer.data)
