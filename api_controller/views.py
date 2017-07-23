@@ -37,24 +37,43 @@ class Translation(APIView):
     def post(self, request, obj_type, pk, format=None):
         service_name, lang = None, None
         api_controller = ApiController.objects.filter(id=1)[0]
-        api_controller.stepik_ouath()
+        # TODO put it in another place
+        api_controller.stepik_oauth()
 
         if self.request.query_params.get("service_name"):
             service_name = self.request.query_params.get("service_name")
         if self.request.query_params.get("lang"):
             lang = self.request.query_params.get("lang")
 
-        print("POST METHOD", obj_type, pk, service_name, lang)
         created_translation = api_controller.create_translation(obj_type, pk, service_name, lang)
-        print("AZAZA", created_translation)
-        if created_translation.count() > 1:
-            serializer = TranslationStepSerializer(list(created_translation), many=True)
-        else:
-            serializer = TranslationStepSerializer(created_translation[0])
+
+        if created_translation is None:
+            return self.error_response(404)
+        serializer = TranslationStepSerializer(created_translation[0])
         return Response(serializer.data)
 
+    def put(self, request, obj_type, pk, format=None):
+        service_name, lang, new_text = None, None, None
+        api_controller = ApiController.objects.filter(id=1)[0]
+        # TODO put it in another place
+        api_controller.stepik_oauth()
 
+        if self.request.query_params.get("service_name"):
+            service_name = self.request.query_params.get("service_name")
+        if self.request.query_params.get("lang"):
+            lang = self.request.query_params.get("lang")
+        if self.request.query_params.get("text"):
+            new_text = self.request.query_params.get("text")
 
+        data = api_controller.get_translation(obj_type, pk, service_name, lang)
+        if data is None or new_text is None:
+            return self.error_response(404)
+        one = data[0]
+        one.text = new_text
+        one.save()
+
+        serializer = TranslationStepSerializer(one)
+        return Response(serializer.data)
 
     def error_response(self, number_error):
         if number_error == 404:

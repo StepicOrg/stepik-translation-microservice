@@ -65,20 +65,16 @@ class YandexTranslator(TranslationService):
     # :param lang: step's lang
     # :param text: step's text in html format
     # :returns: TranslationStep object or None
-    def create_step_translation(self, pk, lang, text, lesson, **kwargs):
-        step = self.get_step(pk, lang)
-        if step is None:
-            final_url = self.base_url
-            params = ["?{0}={1}".format("key", self.api_key), "&{0}={1}".format("text", text)]
-            for name, value in kwargs.items():
-                params.append("&{0}={1}".format(name, value))
-            response = requests.get(final_url + "".join(params)).json()
-            newly_translated_step = TranslationStep.objects.create(
-                stepik_id=pk, lang=lang, text=response['text']
-            )
-            return newly_translated_step
-        else:
-            return step
+    def create_step_translation(self, pk, text, **kwargs):
+        final_url = self.base_url
+        params = ["?{0}={1}".format("key", self.api_key), "&{0}={1}".format("text", text)]
+        for name, value in kwargs.items():
+            params.append("&{0}={1}".format(name, value))
+        print("PARAMS:", params)
+        response = requests.get(final_url + "".join(params)).json()
+        return response['text']
+
+
 
     # :param pk: step's stepik_id
     # :param new_text: new translation of step's text
@@ -110,6 +106,7 @@ class YandexTranslator(TranslationService):
     # :param lang: step's lang
     # :returns: json of steps ids
     def translate_lesson(self, pk, lang):
+
         ids = self.get_lesson_translated_steps(pk, lang)
         if ids is not None:
             return ids
@@ -122,6 +119,9 @@ class YandexTranslator(TranslationService):
                 step = self.create_step_translation(id, lang, text, pk)
                 ids.append(step)
             return json.dumps(ids)
+
+    def get_translated_lesson(self, pk, lang):
+        pass
 
     # :returns: json of languages used in step's translation
     def get_available_languages(self):
