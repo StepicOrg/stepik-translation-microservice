@@ -22,7 +22,7 @@ class ApiController(models.Model):
     api_host = "https://stepik.org"
     token = None
 
-    def stepik_ouath(self):
+    def stepik_oauth(self):
 
         auth = requests.auth.HTTPBasicAuth(self.oauth_credentials["client_id"], self.oauth_credentials["client_secret"])
         response = requests.post('https://stepik.org/oauth2/token/',
@@ -39,7 +39,9 @@ class ApiController(models.Model):
         print("API_URL", api_url)
         response = requests.get(api_url,
                                 headers={'Authorization': 'Bearer ' + self.token}).json()
-        return response['{}s'.format(obj_class)][0]
+        if '{}s'.format(obj_class) in response:
+            return response['{}s'.format(obj_class)][0]
+        return None
 
     def fetch_stepik_step(self, pk):
         return self.fetch_stepik_object("step", pk)
@@ -49,14 +51,18 @@ class ApiController(models.Model):
 
     def create_translation(self, obj_type, pk, service_name=None, lang=None):
         translation = self.get_translation(obj_type, pk, service_name, lang)
-        print("GETTED", translation)
         if translation is not None:
             return translation
         created = self.fetch_stepik_object(obj_type[:-1], pk)
+        if created is None:
+            return None
         ts = None
-        tl = TranslatedLesson.objects.get(pk=1)
+        yt = YandexTranslator.objects.all()[0]
+        translated_text = yt.create_step_translation(pk, created['block']['text'], lang=lang)
+        tl = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name)
         ts = TranslationStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
-                                            text=created['block']['text'], lesson=tl)
+                                            text=translated_text, lesson=tl)
+
         return ts
 
     def get_translation(self, obj_type, pk, service_name=None, lang=None):
@@ -93,6 +99,7 @@ class ApiController(models.Model):
                 elif obj_type == "steps":
                     print("FUN")
                     result = translation_service.get_step_translation(pk, lang)
+
         if result is None or result.exists() == 0:
             return None
         return result
@@ -110,3 +117,6 @@ class ApiController(models.Model):
         return
         # def get_translation_ratio(self, obj_type, pk):
         #    self.translation_service.get_translation_ratio(obj_type, )
+
+        # def get_transaltion_service(self, service_name):
+        #     pass
