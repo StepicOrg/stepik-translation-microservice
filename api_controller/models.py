@@ -49,25 +49,48 @@ class ApiController(models.Model):
     def fetch_stepik_lesson(self, pk):
         return self.fetch_stepik_object("lesson", pk)
 
-    def create_translation(self, obj_type, pk, service_name=None, lang=None):
-        translation = self.get_translation(obj_type, pk, service_name, lang)
-        if translation is not None:
-            return translation
-        created = self.fetch_stepik_object(obj_type[:-1], pk)
-        if created is None:
-            return None
-        ts = None
-        yt = YandexTranslator.objects.all()[0]
-        translated_text = yt.create_step_translation(pk, created['block']['text'], lang=lang)
-        tl = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name)
-        ts = TranslationStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
-                                            text=translated_text, lesson=tl)
+    def steps_text(self, ids):
+        texts = []
+        for id in ids:
+            step = self.fetch_stepik_object("step", id)
+            if step is None or 'text' in step['block']:
+                texts.append("")
+            else:
+                texts.append(step['block']['text'])
+        return texts
 
-        return ts
+    def create_translation(self, obj_type, pk, service_name=None, lang=None):
+
+        if obj_type == "steps":
+            translation = self.get_translation(obj_type, pk, service_name, lang)
+            if translation is not None:
+                return translation
+            created = self.fetch_stepik_object(obj_type[:-1], pk)
+            if created is None:
+                return None
+            ts = None
+            yt = YandexTranslator.objects.all()[0]
+            translated_text = yt.create_step_translation(created['block']['text'], lang=lang)
+            tl = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name)
+            ts = TranslationStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
+                                                text=translated_text, lesson=tl)
+
+            return ts
+        elif obj_type == "lessons":
+            translation = self.get_translation(obj_type, pk, service_name, lang)
+            if translation is not None:
+                return translation
+            stepik_lesson = self.fetch_stepik_object(obj_type[:-1], pk)
+            if stepik_lesson is None:
+                return None
+            yt = YandexTranslator.objects.all()[0]
+            new_lesson = TranslatedLesson.objects.create(stepik_id=pk, service_name="yandex")
+            texts = self.steps_text(stepik_lesson['steps'])
+            yt.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
+            return new_lesson
 
     def get_translation(self, obj_type, pk, service_name=None, lang=None):
         result = None
-        print("GET TRANSLATION", obj_type, pk, service_name, lang)
         if service_name is None:
             if obj_type == "steps":
                 if lang is None:
@@ -81,7 +104,6 @@ class ApiController(models.Model):
                     result = TranslatedLesson.objects.filter(stepik_id=pk, lang=lang)
         else:
             # TODO make normal check
-            print("TRUE: ", service_name in self.translation_name_dict)
             if service_name.lower() in self.translation_name_dict:
                 service_class = self.translation_name_dict[service_name.lower()]
             else:
@@ -92,12 +114,10 @@ class ApiController(models.Model):
                 if isinstance(service, eval(service_class)):
                     translation_service = service
                     break
-            print("TS", translation_service)
             if translation_service is not None:
                 if obj_type == "lessons":
                     result = translation_service.get_lesson_translated_steps(pk, lang)
                 elif obj_type == "steps":
-                    print("FUN")
                     result = translation_service.get_step_translation(pk, lang)
 
         if result is None or result.exists() == 0:
@@ -117,6 +137,9 @@ class ApiController(models.Model):
         return
         # def get_translation_ratio(self, obj_type, pk):
         #    self.translation_service.get_translation_ratio(obj_type, )
-
+        # TODO add get_service for every method
         # def get_transaltion_service(self, service_name):
         #     pass
+
+    def get_translational_ratio(self, pk, obj_type, lang=None, service_name=None):
+        return YandexTranslator.objects.all()[0].get_translation_ratio(pk, obj_type, lang)
