@@ -18,6 +18,13 @@ class TranslatedLesson(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     service_name = models.CharField(max_length=40)
+    amount_steps = models.IntegerField(default=0)
+
+    def get_languages(self):
+        unique_languages = set()
+        for step in self.steps.all():
+            unique_languages.add(step.lang)
+        return unique_languages
 
 
 class TranslationStep(Translation):
