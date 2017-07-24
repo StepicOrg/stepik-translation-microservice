@@ -7,32 +7,29 @@ import json
 
 
 class TranslationService(models.Model):
-    class Meta:
-        abstract = True
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     service_name = models.CharField(max_length=40)
-    base_url = models.CharField()
+    base_url = models.CharField(max_length=255)
     api_version = models.FloatField()
-    api_key = models.CharField()
+    api_key = models.CharField(max_length=255)
     translated_symbols = models.IntegerField()
     count_steps = models.IntegerField()
 
     def get_step_translation(self, pk, lang, lesson):
-        raise NotImplementedError
+        pass
 
     def create_step_translation(self, pk, lang, type):
-        raise NotImplementedError
+        pass
 
     def update_step_translation(self, pk, lang, new_text):
-        raise NotImplementedError
+        pass
 
     def get_lesson_translated_steps(self, pk, lang):
-        raise NotImplementedError
+        pass
 
     def get_available_languages(self):
-        raise NotImplementedError
+        pass
 
     def get_translation_ratio(self, lang, type_object, type_object_id):
         pass
@@ -46,7 +43,7 @@ class YandexTranslator(TranslationService):
     api_controller = models.ForeignKey(
         'api_controller.ApiController',
         on_delete=models.CASCADE,
-        related_name="translation_services"
+        related_name='translation_services'
     )
 
     # :param pk: step's stepik_id
@@ -125,7 +122,8 @@ class YandexTranslator(TranslationService):
                 step.lesson = lesson
                 step.save()
             else:
-                translated_text = self.create_step_translation(texts[i], lang=lang)
+                # don't send empty strings to translation
+                translated_text = texts[i] if not texts[i] else self.create_step_translation(texts[i], lang=lang)
                 TranslationStep.objects.create(stepik_id=id, lang=lang, text=translated_text, lesson=lesson,
                                                service_name="yandex")
 
@@ -142,9 +140,11 @@ class YandexTranslator(TranslationService):
     def get_translation_ratio(self, pk, obj_type, lang):
         if obj_type == "lesson":
             lesson = TranslatedLesson.objects.get(stepik_id=pk)
-            count_steps = len(lesson.steps)
             translated = 0
             for step in lesson.step:
                 if step.lang == lang:
                     translated += 1
-            return translated / count_steps
+            try:
+                return translated / lesson.amount_steps
+            except ZeroDivisionError:
+                return 0
