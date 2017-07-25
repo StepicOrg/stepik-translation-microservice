@@ -10,9 +10,6 @@ class GoogleTranslator(object):
     def __init__(self, obj):
         self.obj = obj
 
-    def say_hello(self):
-        return "hello, I am Sergey Brin!"
-
 
 class AzureTranslator(object):
     def __init__(self, obj):
@@ -20,18 +17,9 @@ class AzureTranslator(object):
 
 
 class YandexTranslator(object):
-    base_url = "https://translate.yandex.net/api/v1.5/tr.json/translate"
-    service_name = "YANDEX"
-    api_version = 1.5
-    api_key = settings.YANDEX_API_KEY
-    api_controller = models.ForeignKey(
-        'api_controller.ApiController',
-        on_delete=models.CASCADE,
-        related_name='translation_services'
-    )
-
     def __init__(self, obj):
         self.obj = obj
+        self.api_key = settings.YANDEX_API_KEY
 
     # :param pk: step's stepik_id
     # :param lang: step's lang
@@ -53,7 +41,6 @@ class YandexTranslator(object):
         params = ["?{0}={1}".format("key", self.api_key), "&{0}={1}".format("text", text)]
         for name, value in kwargs.items():
             params.append("&{0}={1}".format(name, value))
-        print("PARAMS:", params)
         response = requests.get(final_url + "".join(params)).json()
         return response['text']
 
@@ -140,16 +127,22 @@ class YandexTranslator(object):
 class TranslationService(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    service_name = models.CharField(max_length=40)
+    service_name = models.CharField(max_length=40, unique=True)
     base_url = models.CharField(max_length=255)
     api_version = models.FloatField()
-    api_key = models.CharField(max_length=255)
-    translated_symbols = models.IntegerField()
-    count_steps = models.IntegerField()
+    translated_symbols = models.IntegerField(default=0)
+    count_steps = models.IntegerField(default=0)
+
+    api_controller = models.ForeignKey(
+        'api_controller.ApiController',
+        on_delete=models.CASCADE,
+        related_name='translation_services',
+        default=1
+    )
 
     services = {
-        'google': GoogleTranslator,
         'azure': AzureTranslator,
+        'google': GoogleTranslator,
         'yandex': YandexTranslator,
     }
 
