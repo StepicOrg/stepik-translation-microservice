@@ -73,9 +73,8 @@ class ApiController(SingletonModel):
         return texts
 
     def create_translation(self, obj_type, pk, service_name=None, lang=None):
-        if self.translation_services.filter(service_name=service_name.lower()).exists():
-            translation_service = self.translation_services.get(service_name=service_name.lower())
-        else:
+        translation_service = self.translation_services.filter(service_name=service_name.lower())
+        if not translation_service:
             return None
 
         if obj_type == "steps":
@@ -118,10 +117,10 @@ class ApiController(SingletonModel):
                 else:
                     result = TranslatedLesson.objects.filter(stepik_id=pk, lang=lang)
         else:
-            if self.translation_services.filter(service_name=service_name.lower()).exists():
-                translation_service = self.translation_services.get(service_name=service_name.lower())
-            else:
+            translation_service = self.translation_services.filter(service_name=service_name.lower())
+            if not translation_service:
                 return None
+
             if obj_type == "lessons":
                 result = translation_service.get_lesson_translated_steps(pk, lang)
             elif obj_type == "steps":
@@ -132,12 +131,14 @@ class ApiController(SingletonModel):
         return result
 
     def get_available_languages(self, obj_type, service_name, pk):
+        translation_service = self.translation_services.filter(service_name=service_name.lower())
+        if not translation_service:
+            return None
 
-        translational_service = self.translation_services.get(service_name=service_name)
         if obj_type == "service":
-            result = translational_service.get_available_languages()
+            result = translation_service.get_available_languages()
         elif obj_type == "step":
-            result = translational_service.filter(pk=pk)
+            result = translation_service.filter(pk=pk)
         elif obj_type == "lesson":
             result = self.translation_services.filter(pk=pk)
         # TODO add obj_type "course"
@@ -148,8 +149,7 @@ class ApiController(SingletonModel):
         # TODO add get_service for every method
 
     def get_translational_ratio(self, pk, obj_type, lang=None, service_name=None):
-        if self.translation_services.filter(service_name=service_name.lower()).exists():
-            translation_service = self.translation_services.get(service_name=service_name.lower())
-        else:
+        translation_service = self.translation_services.filter(service_name=service_name.lower())
+        if not translation_service:
             return None
-        return translation_service.objects.all()[0].get_translation_ratio(pk, obj_type, lang)
+        return translation_service.get_translation_ratio(pk, obj_type, lang)
