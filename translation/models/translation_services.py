@@ -26,10 +26,11 @@ class YandexTranslator(object):
     # :returns: TranslationStep object or None
     def get_step_translation(self, pk, lang, **kwargs):
         # TODO can we optimize request?
-        if lang is None and TranslationStep.objects.filter(stepik_id=pk).exists():
-            return TranslationStep.objects.filter(stepik_id=pk)
-        elif TranslationStep.objects.filter(stepik_id=pk, lang=lang).exists():
-            return TranslationStep.objects.filter(stepik_id=pk, lang=lang)
+        steps = TranslationStep.objects.filter(stepik_id=pk)
+        if lang is None and steps:
+            return steps
+        elif lang is not None:
+            return steps.filter(lang=lang)
         else:
             return None
 
@@ -49,10 +50,8 @@ class YandexTranslator(object):
     # :param lang: step's lang
     # :returns: True or False
     def update_step_translation(self, pk, lang, new_text):
-        if TranslationStep.objects.filter(pk=pk, lang=lang).exists():
-            step = TranslationStep.objects.filter(pk=pk, lang=lang)[0]
-        else:
-            step = self.create_step_translation(new_text, lang=lang)
+        qs = TranslationStep.objects.filter(pk=pk, lang=lang)
+        step = self.create_step_translation(new_text, lang=lang) if not qs else qs[0]
         step.text = new_text
         step.save()
         return True
@@ -61,10 +60,11 @@ class YandexTranslator(object):
     # :param lang: step's lang
     # :returns: json of steps ids
     def get_lesson_translated_steps(self, pk, lang, **kwargs):
-        if TranslatedLesson.objects.filter(pk=pk).exists():
-            lesson = TranslatedLesson.objects.filter(pk=pk)[0]
-        else:
+        qs = TranslatedLesson.objects.filter(pk=pk)
+        if not qs:
             return None
+        else:
+            lesson = qs[0]
         ids = []
         for step in lesson.steps:
             ids.append(step.pk)
@@ -91,8 +91,8 @@ class YandexTranslator(object):
     def create_lesson_translation(self, pk, ids, texts, lang):
         lesson = TranslatedLesson.objects.get(stepik_id=pk)
         for id, i in enumerate(ids):
-            if TranslationStep.objects.get(stepik_id=id, lang=lang).count() > 0:
-                step = TranslationStep.objects.get(stepik_id=id, lang=lang)
+            step = TranslationStep.objects.filter(stepik_id=id, lang=lang)
+            if step:
                 step.lesson = lesson
                 step.save()
             else:
