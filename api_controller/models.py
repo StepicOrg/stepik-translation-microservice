@@ -22,20 +22,19 @@ class SingletonModel(models.Model):
     @classmethod
     def load(cls):
         if cache.get(cls.__name__) is None:
-            object, created = SingletonModel.objects.get_or_create(pk=1)
+            object, created = cls.objects.get_or_create(pk=1)
             if not created:
                 object.set_cache()
-        return cache(cls.__name__)
+        return cache.get(cls.__name__)
 
 
 class ApiController(SingletonModel):
-    api_key = 0
     oauth_credentials = {
         "client_id": settings.STEPIK_CLIENT_ID,
         "client_secret": settings.STEPIK_CLIENT_SECRET,
     }
-    api_version = 0.1
-    api_host = "https://stepik.org"
+    api_version = models.FloatField(default=0.1)
+    api_host = models.CharField(max_length=255, default="https://stepik.org")
     token = None
 
     def stepik_oauth(self):
