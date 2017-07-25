@@ -6,36 +6,20 @@ import requests
 import json
 
 
-class TranslationService(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    service_name = models.CharField(max_length=40)
-    base_url = models.CharField(max_length=255)
-    api_version = models.FloatField()
-    api_key = models.CharField(max_length=255)
-    translated_symbols = models.IntegerField()
-    count_steps = models.IntegerField()
+class GoogleTranslator(object):
+    def __init__(self, obj):
+        self.obj = obj
 
-    def get_step_translation(self, pk, lang, lesson):
-        pass
-
-    def create_step_translation(self, pk, lang, type):
-        pass
-
-    def update_step_translation(self, pk, lang, new_text):
-        pass
-
-    def get_lesson_translated_steps(self, pk, lang):
-        pass
-
-    def get_available_languages(self):
-        pass
-
-    def get_translation_ratio(self, lang, type_object, type_object_id):
-        pass
+    def say_hello(self):
+        return "hello, I am Sergey Brin!"
 
 
-class YandexTranslator(TranslationService):
+class AzureTranslator(object):
+    def __init__(self, obj):
+        self.obj = obj
+
+
+class YandexTranslator(object):
     base_url = "https://translate.yandex.net/api/v1.5/tr.json/translate"
     service_name = "YANDEX"
     api_version = 1.5
@@ -45,6 +29,9 @@ class YandexTranslator(TranslationService):
         on_delete=models.CASCADE,
         related_name='translation_services'
     )
+
+    def __init__(self, obj):
+        self.obj = obj
 
     # :param pk: step's stepik_id
     # :param lang: step's lang
@@ -148,3 +135,33 @@ class YandexTranslator(TranslationService):
                 return translated / lesson.amount_steps
             except ZeroDivisionError:
                 return 0
+
+
+class TranslationService(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    service_name = models.CharField(max_length=40)
+    base_url = models.CharField(max_length=255)
+    api_version = models.FloatField()
+    api_key = models.CharField(max_length=255)
+    translated_symbols = models.IntegerField()
+    count_steps = models.IntegerField()
+
+    services = {
+        'google': GoogleTranslator,
+        'azure': AzureTranslator,
+        'yandex': YandexTranslator,
+    }
+
+    @property
+    def service(self):
+        if not hasattr(self, '_service'):
+            # create a new Service object and pass it this model instance
+            self._service = self.services[self.service_name](self)
+        return self._service
+
+    def __getattr__(self, name):
+        if name == '_service':
+            raise AttributeError  # the service hasn't been instantiated yet
+        # delegate all unknown lookups to the service object
+        return getattr(self.service, name)
