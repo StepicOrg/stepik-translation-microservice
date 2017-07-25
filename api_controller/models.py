@@ -14,11 +14,6 @@ class ApiController(models.Model):
     }
     base_url = models.TextField()
     api_version = 0.1
-    translation_name_dict = {
-        "yandex": "YandexTranslator",
-        "azure": "AzureTranslator",
-        "google": "GoogleTranslator",
-    }
     api_host = "https://stepik.org"
     token = None
 
@@ -60,6 +55,10 @@ class ApiController(models.Model):
         return texts
 
     def create_translation(self, obj_type, pk, service_name=None, lang=None):
+        if self.translation_services.filter(service_name=service_name.lower()).exists():
+            translation_service = self.translation_services.get(service_name=service_name.lower())
+        else:
+            return None
 
         if obj_type == "steps":
             translation = self.get_translation(obj_type, pk, service_name, lang)
@@ -69,8 +68,7 @@ class ApiController(models.Model):
             if created is None:
                 return None
             ts = None
-            yt = YandexTranslator.objects.all()[0]
-            translated_text = yt.create_step_translation(created['block']['text'], lang=lang)
+            translated_text = translation_service.create_step_translation(created['block']['text'], lang=lang)
             tl = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name)
             ts = TranslationStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
                                                 text=translated_text, lesson=tl)
@@ -83,10 +81,9 @@ class ApiController(models.Model):
             stepik_lesson = self.fetch_stepik_object(obj_type[:-1], pk)
             if stepik_lesson is None:
                 return None
-            yt = YandexTranslator.objects.all()[0]
             new_lesson = TranslatedLesson.objects.create(stepik_id=pk, service_name="yandex")
             texts = self.steps_text(stepik_lesson['steps'])
-            yt.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
+            translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
             return new_lesson
 
     def get_translation(self, obj_type, pk, service_name=None, lang=None):
@@ -103,36 +100,29 @@ class ApiController(models.Model):
                 else:
                     result = TranslatedLesson.objects.filter(stepik_id=pk, lang=lang)
         else:
-            # TODO make normal check
-            if service_name.lower() in self.translation_name_dict:
-                service_class = self.translation_name_dict[service_name.lower()]
+            if self.translation_services.filter(service_name=service_name.lower()).exists():
+                translation_service = self.translation_services.get(service_name=service_name.lower())
             else:
                 return None
-            translation_service = None
-            for service in self.translation_services.all():
-
-                if isinstance(service, eval(service_class)):
-                    translation_service = service
-                    break
-            if translation_service is not None:
-                if obj_type == "lessons":
-                    result = translation_service.get_lesson_translated_steps(pk, lang)
-                elif obj_type == "steps":
-                    result = translation_service.get_step_translation(pk, lang)
+            if obj_type == "lessons":
+                result = translation_service.get_lesson_translated_steps(pk, lang)
+            elif obj_type == "steps":
+                result = translation_service.get_step_translation(pk, lang)
 
         if result is None or result.exists() == 0:
             return None
         return result
 
     def get_available_languages(self, obj_type, service_name, pk):
-        # TODO add obj_type "course"
-        translational_service = self.translation_services.filter(service_name=service_name)
+
+        translational_service = self.translation_services.get(service_name=service_name)
         if obj_type == "service":
             result = translational_service.get_available_languages()
         elif obj_type == "step":
             result = translational_service.filter(pk=pk)
         elif obj_type == "lesson":
             result = self.translation_services.filter(pk=pk)
+        # TODO add obj_type "course"
         # TODO make json serializer
         return
         # def get_translation_ratio(self, obj_type, pk):
@@ -142,4 +132,8 @@ class ApiController(models.Model):
         #     pass
 
     def get_translational_ratio(self, pk, obj_type, lang=None, service_name=None):
-        return YandexTranslator.objects.all()[0].get_translation_ratio(pk, obj_type, lang)
+        if self.translation_services.filter(service_name=service_name.lower()).exists():
+            translation_service = self.translation_services.get(service_name=service_name.lower())
+        else:
+            return None
+        return translation_service.objects.all()[0].get_translation_ratio(pk, obj_type, lang)
