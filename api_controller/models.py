@@ -2,17 +2,38 @@ from django.db import models
 from django.conf import settings
 from translation.models import TranslatedLesson, TranslationStep
 from translation.models import YandexTranslator
+from django.core.cache import cache
 
 import requests
 
 
-class ApiController(models.Model):
+class SingletonModel(models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super(SingletonModel, self).save(*args, **kwargs)
+        self.set_cache()
+
+    def set_cache(self):
+        cache.set(self.__class__.__name__, self)
+
+    @classmethod
+    def load(cls):
+        if cache.get(cls.__name__) is None:
+            object, created = SingletonModel.objects.get_or_create(pk=1)
+            if not created:
+                object.set_cache()
+        return cache(cls.__name__)
+
+
+class ApiController(SingletonModel):
     api_key = 0
     oauth_credentials = {
         "client_id": settings.STEPIK_CLIENT_ID,
         "client_secret": settings.STEPIK_CLIENT_SECRET,
     }
-    base_url = models.TextField()
     api_version = 0.1
     api_host = "https://stepik.org"
     token = None
@@ -24,14 +45,12 @@ class ApiController(models.Model):
                                  data={'grant_type': 'client_credentials'},
                                  auth=auth)
         self.token = response.json().get('access_token', None)
-        print(self.token)
         if not self.token:
-            print('Unable to authorize with provided credentials')
-            exit(1)
+            return False
+        return True
 
     def fetch_stepik_object(self, obj_class, obj_id):
         api_url = '{}/api/{}s/{}'.format(self.api_host, obj_class, obj_id)
-        print("API_URL", api_url)
         response = requests.get(api_url,
                                 headers={'Authorization': 'Bearer ' + self.token}).json()
         if '{}s'.format(obj_class) in response:
@@ -128,8 +147,6 @@ class ApiController(models.Model):
         # def get_translation_ratio(self, obj_type, pk):
         #    self.translation_service.get_translation_ratio(obj_type, )
         # TODO add get_service for every method
-        # def get_transaltion_service(self, service_name):
-        #     pass
 
     def get_translational_ratio(self, pk, obj_type, lang=None, service_name=None):
         if self.translation_services.filter(service_name=service_name.lower()).exists():
