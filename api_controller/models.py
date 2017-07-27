@@ -117,7 +117,7 @@ class ApiController(SingletonModel):
                 else:
                     result = TranslatedLesson.objects.filter(stepik_id=pk, lang=lang)
         else:
-            translation_service = self.translation_services.filter(service_name=service_name.lower())
+            translation_service = self.translation_services.filter(service_name=service_name.lower()).first()
             if not translation_service:
                 return None
 
@@ -125,7 +125,7 @@ class ApiController(SingletonModel):
                 result = translation_service.get_lesson_translated_steps(pk, lang)
             elif obj_type == "steps":
                 result = translation_service.get_step_translation(pk, lang)
-
+        print(result)
         if result is None or result.exists() == 0:
             return None
         return result
