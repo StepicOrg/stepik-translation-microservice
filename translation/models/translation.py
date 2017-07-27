@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Translation(models.Model):
@@ -29,3 +31,9 @@ class TranslatedLesson(models.Model):
 
 class TranslationStep(Translation):
     lesson = models.ForeignKey(TranslatedLesson, on_delete=models.CASCADE, related_name="steps")
+
+
+@receiver(post_save, sender=TranslationStep, dispatch_uid="update_lesson_date")
+def update_lesson_date(sender, instance, **kwargs):
+    qs = TranslatedLesson.objects.filter(id=instance.lesson.pk)
+    qs.update(updated_at=instance.updated_at)
