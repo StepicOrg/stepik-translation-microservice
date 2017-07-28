@@ -8,8 +8,9 @@ class Translation(models.Model):
         abstract = True
 
     stepik_id = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    create_date = models.DateTimeField(auto_now_add=True)
+    update_date = models.DateTimeField(auto_now=True)
+    stepik_update_date = models.DateTimeField(blank=False)
     lang = models.CharField(max_length=10, blank=False)
     text = models.TextField(blank=False)
     service_name = models.CharField(max_length=40)
@@ -17,10 +18,11 @@ class Translation(models.Model):
 
 class TranslatedLesson(models.Model):
     stepik_id = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    create_date = models.DateTimeField(auto_now_add=True)
+    update_date = models.DateTimeField(auto_now=True)
+    stepik_update_date = models.DateTimeField(blank=False)
     service_name = models.CharField(max_length=40)
-    amount_steps = models.IntegerField(default=0)
+    steps_count = models.IntegerField(default=0)
 
     def get_languages(self):
         unique_languages = set()
@@ -30,7 +32,7 @@ class TranslatedLesson(models.Model):
 
 
 class TranslationStep(Translation):
-    lesson = models.ForeignKey(TranslatedLesson, on_delete=models.CASCADE, related_name="steps")
+    lesson = models.ForeignKey(TranslatedLesson, on_delete=models.PROTECT, related_name="steps")
 
 
 @receiver(post_save, sender=TranslationStep, dispatch_uid="update_lesson_date")

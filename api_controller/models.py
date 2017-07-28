@@ -66,7 +66,7 @@ class ApiController(SingletonModel):
         texts = []
         for id in ids:
             step = self.fetch_stepik_object("step", id)
-            if step is None or 'text' in step['block']:
+            if step is None or 'text' not in step['block']:
                 texts.append("")
             else:
                 texts.append(step['block']['text'])
