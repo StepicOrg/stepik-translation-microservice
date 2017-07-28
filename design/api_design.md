@@ -10,7 +10,7 @@ public:
 private:
 
 * *UPDATE* `steps/<stepik_id>/?lang=<>&text=<>&translation_service=<>` - update translated step's text
-* *POST* `steps/<stepik_id>/?lang=<>&text=<>&translation_service=<>` - create translated step's text
+* *POST* `steps/<stepik_id>/?lang=<>&translation_service=<>` - create translated step's text
 
 
 **/api/translation-ratio**
