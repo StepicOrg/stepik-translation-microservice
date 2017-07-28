@@ -95,6 +95,14 @@ class Translation(ListCreateAPIView):
     def error_response(self, number_error):
         if number_error == 404:
             return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        elif number_error == 403:
+            return Response({'detail': 'Action Forbidden.'}, status=status.HTTP_403_FORBIDDEN)
+
+    def success_reponse(self, number_success):
+        if number_success == 201:
+            return Response({'detail': 'Successfully created.'}, status=status.HTTP_201_CREATED)
+        elif number_success == 204:
+            return Response({'detail': 'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
 
     def get_serializer_context(self):
         return {'options': self.kwargs}

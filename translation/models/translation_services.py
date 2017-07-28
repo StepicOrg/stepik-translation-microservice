@@ -125,13 +125,13 @@ class YandexTranslator(object):
 
 
 class TranslationService(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    create_date = models.DateTimeField(auto_now_add=True)
+    update_date = models.DateTimeField(auto_now=True)
     service_name = models.CharField(max_length=40, unique=True)
     base_url = models.CharField(max_length=255)
     api_version = models.FloatField()
     translated_symbols = models.IntegerField(default=0)
-    count_steps = models.IntegerField(default=0)
+    steps_count = models.IntegerField(default=0)
 
     api_controller = models.ForeignKey(
         'api_controller.ApiController',
