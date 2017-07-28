@@ -135,7 +135,7 @@ class TranslationService(models.Model):
 
     api_controller = models.ForeignKey(
         'api_controller.ApiController',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='translation_services',
         default=1
     )
