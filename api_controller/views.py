@@ -8,7 +8,7 @@ import collections
 from rest_framework.generics import ListAPIView, ListCreateAPIView, GenericAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import serializers
-
+from .constants import RequestedObject
 
 class BasicPagination(PageNumberPagination):
     page_size = 3
@@ -43,7 +43,7 @@ class Translation(ListCreateAPIView):
         api_controller = ApiController.load()
 
         pk = self.kwargs.get("pk")
-        obj_type = self.kwargs["obj_type"]
+        obj_type = RequestedObject(self.kwargs["obj_type"][:-1])
 
         service_name = self.request.query_params.get("service_name", None)
         lang = self.request.query_params.get("lang", None)
@@ -118,6 +118,7 @@ class TranslationalRatio(GenericAPIView):
     def get(self, request, obj_type, pk, format=None):
         api_controller = ApiController.load()
         service_name, lang = None, None
+        obj_type = RequestedObject(obj_type[:-1])
 
         if self.request.query_params.get("service_name"):
             service_name = self.request.query_params.get("service_name")
