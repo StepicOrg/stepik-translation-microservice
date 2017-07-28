@@ -25,7 +25,6 @@ class YandexTranslator(object):
     # :param lang: step's lang
     # :returns: TranslatedStep object or None
     def get_step_translation(self, pk, lang, **kwargs):
-        # TODO can we optimize request?
         steps = TranslatedStep.objects.filter(stepik_id=pk)
         if lang is None and steps:
             return steps
