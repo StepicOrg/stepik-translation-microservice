@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                 ('base_url', models.CharField(max_length=255)),
                 ('api_version', models.FloatField()),
                 ('translated_symbols', models.IntegerField(default=0)),
-                ('count_steps', models.IntegerField(default=0)),
+                ('steps_count', models.IntegerField(default=0)),
                 ('api_controller', models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='translation_services', to='api_controller.ApiController')),
             ],
         ),

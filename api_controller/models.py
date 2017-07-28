@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 from translation.models import TranslatedLesson, TranslatedStep
-from translation.models import YandexTranslator
 from django.core.cache import cache
 
 import requests
@@ -56,13 +55,14 @@ class ApiController(SingletonModel):
             return response['{}s'.format(obj_class)][0]
         return None
 
-    def fetch_objects(self, obj_class, obj_ids, keep_order=True):
+    def fetch_stepik_objects(self, obj_class, obj_ids, keep_order=True):
         objs = []
-        load_size = 30  # don't wanna HTTP request limits
+        load_size = 30  # don't wanna hit HTTP request limits
         for i in range(0, len(obj_ids), load_size):
             slice = obj_ids[i:i + load_size]
             api_url = '{}/api/{}s/?{}'.format(self.api_host, obj_class, "&".join("ids[]={}".format(x) for x in slice))
-            response = requests.get(api_url, headers={'Authorization': 'Bearer ' + self.token}).json()
+            response = requests.get(api_url,
+                                    headers={'Authorization': 'Bearer ' + self.token}).json()
             objs += response['{}s'.format(obj_class)]
         if keep_order:
             return sorted(objs, key=lambda x: obj_ids.index(x['id']))
@@ -76,8 +76,8 @@ class ApiController(SingletonModel):
 
     def steps_text(self, ids):
         texts = []
-        for id in ids:
-            step = self.fetch_stepik_object("step", id)
+        steps = self.fetch_stepik_objects("step", ids)
+        for step in steps:
             if step is None or 'text' not in step['block']:
                 texts.append("")
             else:
@@ -137,7 +137,6 @@ class ApiController(SingletonModel):
                 result = translation_service.get_lesson_translated_steps(pk, lang)
             elif obj_type == "steps":
                 result = translation_service.get_step_translation(pk, lang)
-        print(result)
         if result is None or result.exists() == 0:
             return None
         return result
