@@ -9,6 +9,8 @@ from rest_framework.generics import ListAPIView, ListCreateAPIView, GenericAPIVi
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import serializers
 from .constants import RequestedObject
+from rest_framework import viewsets
+
 
 class BasicPagination(PageNumberPagination):
     page_size = 3
@@ -51,61 +53,46 @@ class Translation(ListCreateAPIView):
         data = api_controller.get_translation(obj_type, pk, service_name, lang)
         return data
 
-    # def post(self, request, obj_type, pk, format=None):
-    #     service_name, lang = None, None
-    #     api_controller = ApiController.load()
-    #     # TODO put it in another place
-    #     api_controller.stepik_oauth()
-    #
-    #     if self.request.query_params.get("service_name"):
-    #         service_name = self.request.query_params.get("service_name")
-    #     if self.request.query_params.get("lang"):
-    #         lang = self.request.query_params.get("lang")
-    #
-    #     created_translation = api_controller.create_translation(obj_type, pk, service_name, lang)
-    #
-    #     if created_translation is None:
-    #         return self.error_response(404)
-    #     serializer = TranslationStepSerializer(created_translation[0])
-    #     return Response(serializer.data)
-    #
-    # def put(self, request, obj_type, pk, format=None):
-    #     service_name, lang, new_text = None, None, None
-    #     api_controller = ApiController.load()
-    #     # TODO put it in another place
-    #     api_controller.stepik_oauth()
-    #
-    #     if self.request.query_params.get("service_name"):
-    #         service_name = self.request.query_params.get("service_name")
-    #     if self.request.query_params.get("lang"):
-    #         lang = self.request.query_params.get("lang")
-    #     if self.request.query_params.get("text"):
-    #         new_text = self.request.query_params.get("text")
-    #
-    #     data = api_controller.get_translation(obj_type, pk, service_name, lang)
-    #     if data is None or new_text is None:
-    #         return self.error_response(404)
-    #     one = data[0]
-    #     one.text = new_text
-    #     one.save()
-    #
-    #     serializer = TranslationStepSerializer(one)
-    #     return Response(serializer.data)
-
-    def error_response(self, number_error):
-        if number_error == 404:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
-        elif number_error == 403:
-            return Response({'detail': 'Action Forbidden.'}, status=status.HTTP_403_FORBIDDEN)
-
-    def success_reponse(self, number_success):
-        if number_success == 201:
-            return Response({'detail': 'Successfully created.'}, status=status.HTTP_201_CREATED)
-        elif number_success == 204:
-            return Response({'detail': 'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
-
-    def get_serializer_context(self):
-        return {'options': self.kwargs}
+        # def post(self, request, obj_type, pk, format=None):
+        #     service_name, lang = None, None
+        #     api_controller = ApiController.load()
+        #     # TODO put it in another place
+        #     api_controller.stepik_oauth()
+        #
+        #     if self.request.query_params.get("service_name"):
+        #         service_name = self.request.query_params.get("service_name")
+        #     if self.request.query_params.get("lang"):
+        #         lang = self.request.query_params.get("lang")
+        #
+        #     created_translation = api_controller.create_translation(obj_type, pk, service_name, lang)
+        #
+        #     if created_translation is None:
+        #         return self.error_response(404)
+        #     serializer = TranslationStepSerializer(created_translation[0])
+        #     return Response(serializer.data)
+        #
+        # def put(self, request, obj_type, pk, format=None):
+        #     service_name, lang, new_text = None, None, None
+        #     api_controller = ApiController.load()
+        #     # TODO put it in another place
+        #     api_controller.stepik_oauth()
+        #
+        #     if self.request.query_params.get("service_name"):
+        #         service_name = self.request.query_params.get("service_name")
+        #     if self.request.query_params.get("lang"):
+        #         lang = self.request.query_params.get("lang")
+        #     if self.request.query_params.get("text"):
+        #         new_text = self.request.query_params.get("text")
+        #
+        #     data = api_controller.get_translation(obj_type, pk, service_name, lang)
+        #     if data is None or new_text is None:
+        #         return self.error_response(404)
+        #     one = data[0]
+        #     one.text = new_text
+        #     one.save()
+        #
+        #     serializer = TranslationStepSerializer(one)
+        #     return Response(serializer.data)
 
 
 class Translations(ListAPIView):
@@ -132,3 +119,64 @@ class TranslationalRatio(GenericAPIView):
         else:
             serializer = serializers.FloatField(data)
             return Response(serializer.data)
+
+
+class BasicApiViewSet(viewsets.ModelViewSet):
+    serializer_class = None
+
+    def get_queryset(self):
+        params = self.get_params()
+        data = self.get_record(**params)
+        return data
+
+    def get_params(self):
+        params = dict()
+        params["pk"] = self.kwargs.get("pk")
+        params["obj_type"] = RequestedObject(self.kwargs["obj_type"][:-1])
+        params["service_name"] = self.request.query_params.get("service_name", None)
+        params["lang"] = self.request.query_params.get("lang", None)
+        return params
+
+    def get_record(self, **kwargs):
+        raise NotImplementedError()
+
+    def get_type_object(self):
+        raise NotImplementedError()
+
+    def list(self, request):
+        objects = self.get_queryset()
+        serializer = self.serializer_class(instance=objects, many=True)
+        if serializer.data is None:
+            return self.error_response(404)
+        return serializer.data
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.DATA)
+        if not serializer.is_valid():
+            return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        obj = serializer.object
+        self.check_object_permissions(request, obj)
+        obj.create()
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
+    def retrieve(self, request):
+        obj = self.get_queryset()
+        serializer = self.serializer_class(instance=obj)
+        if serializer.data is None:
+            return self.error_response(404)
+        return serializer.data
+
+    def update(self, request):
+        pass
+
+    def error_response(self, number_error):
+        if number_error == 404:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        elif number_error == 403:
+            return Response({'detail': 'Action Forbidden.'}, status=status.HTTP_403_FORBIDDEN)
+
+    def success_reponse(self, number_success):
+        if number_success == 201:
+            return Response({'detail': 'Successfully created.'}, status=status.HTTP_201_CREATED)
+        elif number_success == 204:
+            return Response({'detail': 'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
