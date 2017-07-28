@@ -56,6 +56,18 @@ class ApiController(SingletonModel):
             return response['{}s'.format(obj_class)][0]
         return None
 
+    def fetch_objects(self, obj_class, obj_ids, keep_order=True):
+        objs = []
+        load_size = 30  # don't wanna HTTP request limits
+        for i in range(0, len(obj_ids), load_size):
+            slice = obj_ids[i:i + load_size]
+            api_url = '{}/api/{}s/?{}'.format(self.api_host, obj_class, "&".join("ids[]={}".format(x) for x in slice))
+            response = requests.get(api_url, headers={'Authorization': 'Bearer ' + self.token}).json()
+            objs += response['{}s'.format(obj_class)]
+        if keep_order:
+            return sorted(objs, key=lambda x: obj_ids.index(x['id']))
+        return objs
+
     def fetch_stepik_step(self, pk):
         return self.fetch_stepik_object("step", pk)
 
