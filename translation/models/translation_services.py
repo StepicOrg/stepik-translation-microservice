@@ -1,6 +1,8 @@
 from .translation import TranslatedStep, TranslatedLesson
 from django.db import models
 from django.conf import settings
+from api_controller.constants import RequestedObject
+
 
 import requests
 import json
@@ -111,7 +113,7 @@ class YandexTranslator(object):
         return json.dumps(list(unique_languages))
 
     def get_translation_ratio(self, pk, obj_type, lang):
-        if obj_type == "lesson":
+        if obj_type is RequestedObject.LESSON:
             lesson = TranslatedLesson.objects.get(stepik_id=pk)
             translated = 0
             for step in lesson.step:

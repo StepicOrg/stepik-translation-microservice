@@ -3,6 +3,8 @@ from django.conf import settings
 from translation.models import TranslatedLesson, TranslatedStep
 from django.core.cache import cache
 
+from.constants import RequestedObject
+
 import requests
 
 
@@ -89,11 +91,11 @@ class ApiController(SingletonModel):
         if not translation_service:
             return None
 
-        if obj_type == "steps":
+        if obj_type is RequestedObject.STEP:
             translation = self.get_translation(obj_type, pk, service_name, lang)
             if translation is not None:
                 return translation
-            created = self.fetch_stepik_object(obj_type[:-1], pk)
+            created = self.fetch_stepik_object(obj_type, pk)
             if created is None:
                 return None
             ts = None
@@ -103,11 +105,11 @@ class ApiController(SingletonModel):
                                                text=translated_text, lesson=tl)
 
             return ts
-        elif obj_type == "lessons":
+        elif obj_type is RequestedObject.LESSON:
             translation = self.get_translation(obj_type, pk, service_name, lang)
             if translation is not None:
                 return translation
-            stepik_lesson = self.fetch_stepik_object(obj_type[:-1], pk)
+            stepik_lesson = self.fetch_stepik_object(obj_type, pk)
             if stepik_lesson is None:
                 return None
             new_lesson = TranslatedLesson.objects.create(stepik_id=pk, service_name="yandex")
@@ -118,12 +120,12 @@ class ApiController(SingletonModel):
     def get_translation(self, obj_type, pk, service_name=None, lang=None):
         result = None
         if service_name is None:
-            if obj_type == "steps":
+            if obj_type is RequestedObject.STEP:
                 if lang is None:
                     result = TranslatedStep.objects.filter(stepik_id=pk)
                 else:
                     result = TranslatedStep.objects.filter(stepik_id=pk, lang=lang)
-            elif obj_type == "lessons":
+            elif obj_type is RequestedObject.LESSON:
                 if lang is None:
                     result = TranslatedLesson.objects.filter(stepik_id=pk)
                 else:
@@ -133,9 +135,9 @@ class ApiController(SingletonModel):
             if not translation_service:
                 return None
 
-            if obj_type == "lessons":
+            if obj_type == RequestedObject.LESSON:
                 result = translation_service.get_lesson_translated_steps(pk, lang)
-            elif obj_type == "steps":
+            elif obj_type == RequestedObject.STEP:
                 result = translation_service.get_step_translation(pk, lang)
         if result is None or result.exists() == 0:
             return None
@@ -146,11 +148,11 @@ class ApiController(SingletonModel):
         if not translation_service:
             return None
 
-        if obj_type == "service":
+        if obj_type is RequestedObject.SERVICE:
             result = translation_service.get_available_languages()
-        elif obj_type == "step":
+        elif obj_type is RequestedObject.STEP:
             result = translation_service.filter(pk=pk)
-        elif obj_type == "lesson":
+        elif obj_type is RequestedObject.LESSON:
             result = self.translation_services.filter(pk=pk)
         # TODO add obj_type "course"
         # TODO make json serializer
