@@ -31,11 +31,11 @@ class TranslatedLesson(models.Model):
         return unique_languages
 
 
-class TranslationStep(Translation):
+class TranslatedStep(Translation):
     lesson = models.ForeignKey(TranslatedLesson, on_delete=models.PROTECT, related_name="steps")
 
 
-@receiver(post_save, sender=TranslationStep, dispatch_uid="update_lesson_date")
+@receiver(post_save, sender=TranslatedStep, dispatch_uid="update_lesson_date")
 def update_lesson_date(sender, instance, **kwargs):
     qs = TranslatedLesson.objects.filter(id=instance.lesson.pk)
     qs.update(updated_at=instance.updated_at)
