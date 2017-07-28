@@ -1,4 +1,4 @@
-from .translation import TranslationStep, TranslatedLesson
+from .translation import TranslatedStep, TranslatedLesson
 from django.db import models
 from django.conf import settings
 
@@ -23,10 +23,10 @@ class YandexTranslator(object):
 
     # :param pk: step's stepik_id
     # :param lang: step's lang
-    # :returns: TranslationStep object or None
+    # :returns: TranslatedStep object or None
     def get_step_translation(self, pk, lang, **kwargs):
         # TODO can we optimize request?
-        steps = TranslationStep.objects.filter(stepik_id=pk)
+        steps = TranslatedStep.objects.filter(stepik_id=pk)
         if lang is None and steps:
             return steps
         elif lang is not None:
@@ -36,7 +36,7 @@ class YandexTranslator(object):
 
     # :param text: step's text in html format
     # :param lang: step's lang
-    # :returns: TranslationStep object or None
+    # :returns: TranslatedStep object or None
     def create_step_translation(self, text, **kwargs):
         final_url = self.base_url
         params = ["?{0}={1}".format("key", self.api_key), "&{0}={1}".format("text", text)]
@@ -50,7 +50,7 @@ class YandexTranslator(object):
     # :param lang: step's lang
     # :returns: True or False
     def update_step_translation(self, pk, lang, new_text):
-        qs = TranslationStep.objects.filter(pk=pk, lang=lang)
+        qs = TranslatedStep.objects.filter(pk=pk, lang=lang)
         step = self.create_step_translation(new_text, lang=lang) if not qs else qs[0]
         step.text = new_text
         step.save()
@@ -91,19 +91,19 @@ class YandexTranslator(object):
     def create_lesson_translation(self, pk, ids, texts, lang):
         lesson = TranslatedLesson.objects.get(stepik_id=pk)
         for id, i in enumerate(ids):
-            step = TranslationStep.objects.filter(stepik_id=id, lang=lang)
+            step = TranslatedStep.objects.filter(stepik_id=id, lang=lang)
             if step:
                 step.lesson = lesson
                 step.save()
             else:
                 # don't send empty strings to translation
                 translated_text = texts[i] if not texts[i] else self.create_step_translation(texts[i], lang=lang)
-                TranslationStep.objects.create(stepik_id=id, lang=lang, text=translated_text, lesson=lesson,
-                                               service_name="yandex")
+                TranslatedStep.objects.create(stepik_id=id, lang=lang, text=translated_text, lesson=lesson,
+                                              service_name="yandex")
 
     # :returns: json of languages used in step's translation
     def get_available_languages(self):
-        all_steps = TranslationStep.objects.filter(service_name=self.service_name)
+        all_steps = TranslatedStep.objects.filter(service_name=self.service_name)
         unique_languages = set()
         # http://blog.etianen.com/blog/2013/06/08/django-querysets/
         for step in all_steps.iterator():

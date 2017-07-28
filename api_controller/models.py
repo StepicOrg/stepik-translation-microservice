@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from translation.models import TranslatedLesson, TranslationStep
+from translation.models import TranslatedLesson, TranslatedStep
 from translation.models import YandexTranslator
 from django.core.cache import cache
 
@@ -87,8 +87,8 @@ class ApiController(SingletonModel):
             ts = None
             translated_text = translation_service.create_step_translation(created['block']['text'], lang=lang)
             tl = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name)
-            ts = TranslationStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
-                                                text=translated_text, lesson=tl)
+            ts = TranslatedStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
+                                               text=translated_text, lesson=tl)
 
             return ts
         elif obj_type == "lessons":
@@ -108,9 +108,9 @@ class ApiController(SingletonModel):
         if service_name is None:
             if obj_type == "steps":
                 if lang is None:
-                    result = TranslationStep.objects.filter(stepik_id=pk)
+                    result = TranslatedStep.objects.filter(stepik_id=pk)
                 else:
-                    result = TranslationStep.objects.filter(stepik_id=pk, lang=lang)
+                    result = TranslatedStep.objects.filter(stepik_id=pk, lang=lang)
             elif obj_type == "lessons":
                 if lang is None:
                     result = TranslatedLesson.objects.filter(stepik_id=pk)

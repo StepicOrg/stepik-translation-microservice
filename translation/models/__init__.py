@@ -1,2 +1,2 @@
 from .translation_services import YandexTranslator, TranslationService, GoogleTranslator, AzureTranslator
-from .translation import TranslatedLesson, TranslationStep
+from .translation import TranslatedLesson, TranslatedStep

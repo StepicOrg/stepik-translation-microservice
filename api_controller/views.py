@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from api_controller.models import ApiController
 from translation.serializers import TranslationStepSerializer
-from translation.models import TranslationStep
+from translation.models import TranslatedStep
 import collections
 from rest_framework.generics import ListAPIView, ListCreateAPIView, GenericAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
@@ -101,7 +101,7 @@ class Translation(ListCreateAPIView):
 
 
 class Translations(ListAPIView):
-    queryset = TranslationStep.objects.all()
+    queryset = TranslatedStep.objects.all()
     serializer_class = TranslationStepSerializer
     pagination_class = BasicPagination
 
