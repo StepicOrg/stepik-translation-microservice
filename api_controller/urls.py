@@ -1,10 +1,28 @@
 from django.conf.urls import url
-from api_controller import views
+from api_controller.views import TranslatedStepViewSet, TranslatedLessonViewSet, TranslationalRatio
+
+steps_detail = TranslatedStepViewSet.as_view({
+    "get": "retrieve",
+    "post": "create",
+    "put": "update"
+})
+
+steps_list = TranslatedLessonViewSet.as_view({"get": "list"})
+
+lesson_detail = TranslatedLessonViewSet.as_view({
+    "get": "retrieve",
+    "post": "create",
+    "put": "update"
+})
+
+lesson_list = TranslatedLessonViewSet.as_view({"get": "list"})
 
 urlpatterns = [
-    url(r'^api/translation/(?P<obj_type>[a-z]+)/(?P<pk>[0-9]+)$', views.Translation.as_view(), name="translation"),
-    url(r'^api/translation/steps/', views.Translations.as_view(), name="translations"),
-    url(r'^api/translational_ratio/(?P<obj_type>[a-z]+)/(?P<pk>[0-9]+)$', views.TranslationalRatio.as_view(),
+    url(r'^api/translation/steps/(?P<pk>[0-9]+)$', steps_detail, name="step-datail"),
+    url(r'^api/translation/steps/', steps_list, name="step-list"),
+    url(r'^api/translation/lessons/(?P<pk>[0-9]+)$', lesson_detail, name="lesson-detail"),
+    url(r'^api/translation/lessons/', lesson_list, name="lesson-list"),
+    url(r'^api/translational_ratio/(?P<obj_type>[a-z]+)/(?P<pk>[0-9]+)$', TranslationalRatio.as_view(),
         name="translational_ratio"),
     # url(r'^api/available_languages', views.AvailableLanguages.as_view(), name="available_languages"),
 ]

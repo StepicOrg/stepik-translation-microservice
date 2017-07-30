@@ -38,4 +38,4 @@ class TranslatedStep(Translation):
 @receiver(post_save, sender=TranslatedStep, dispatch_uid="update_lesson_date")
 def update_lesson_date(sender, instance, **kwargs):
     qs = TranslatedLesson.objects.filter(id=instance.lesson.pk)
-    qs.update(updated_at=instance.updated_at)
+    qs.update(update_date=instance.update_date)
