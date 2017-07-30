@@ -2,7 +2,7 @@
 
 public:
 
-* *GET* `lessons/?page=<>&lang=<>&translation_service=<>` - get all lessons
+* *GET* `lessons/?page=<>&translation_service=<>` - get all lessons
 * *GET* `lessons/<stepik_id>/?lang=<>&translation_service=<>` - get specific lesson
 * *GET* `steps/?page=<>&lang=<>&translation_service=<>` - get all translated steps
 * *GET* `steps/<stepik_id>/?lang=<>&translation_service=<>` - get specific step
