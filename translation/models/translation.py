@@ -17,7 +17,7 @@ class Translation(models.Model):
 
 
 class TranslatedLesson(models.Model):
-    stepik_id = models.IntegerField()
+    stepik_id = models.IntegerField(unique=True)
     create_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
     stepik_update_date = models.DateTimeField(blank=False)
