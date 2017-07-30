@@ -87,16 +87,17 @@ class ApiController(SingletonModel):
                 texts.append(step['block']['text'])
         return texts
 
-    # :returns: created translation or None if service_name is None or can't be parsed or
+    # :returns: created translation queryset or None if service_name is None or can't be parsed or
     # if Stepik API returned 404 or have no permission
     def create_translation(self, obj_type, pk, service_name=None, lang=None):
         if service_name is None:
             return None
-        translation_service = self.translation_services.filter(service_name=service_name.lower())
-        if not translation_service:
+        try:
+            # convert queryset to object, yes it's guarenteed that service is the only one
+            translation_service = self.translation_services.get(service_name=service_name.lower())
+        except Exception:
             return None
-        # convert queryset to object, yes it's guarenteed that service is the only one
-        translation_service = translation_service[0]
+
         if obj_type is RequestedObject.STEP:
 
             translation = self.get_translation(obj_type, pk, service_name, lang)
@@ -106,9 +107,12 @@ class ApiController(SingletonModel):
             if created is None:
                 return None
             created_step = None
+            lesson = self.fetch_stepik_object("lesson", created['lesson'])
             translated_text = translation_service.create_step_translation(created['block']['text'], lang=lang)
+            datetime_obj = datetime.strptime(lesson['update_date'], "%Y-%m-%dT%H:%M:%SZ")
             created_lesson = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name,
-                                                             stepik_update_date=datetime.now())
+                                                             stepik_update_date=datetime_obj,
+                                                             steps_count=len(lesson["steps"]))
             datetime_obj = datetime.strptime(created['update_date'], "%Y-%m-%dT%H:%M:%SZ")
             created_step = TranslatedStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
                                                          text=translated_text,
@@ -118,6 +122,7 @@ class ApiController(SingletonModel):
             return created_step
         elif obj_type is RequestedObject.LESSON:
             translation = self.get_translation(obj_type, pk, service_name, lang)
+            print("AHHA", translation)
             if translation is not None:
                 return translation
             stepik_lesson = self.fetch_stepik_object(obj_type, pk)
@@ -128,7 +133,9 @@ class ApiController(SingletonModel):
             translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
             return new_lesson
 
+    #:returns queryset translation
     def get_translation(self, obj_type, pk, service_name=None, lang=None):
+
         result = None
         if service_name is None:
             if obj_type is RequestedObject.STEP:
@@ -138,6 +145,7 @@ class ApiController(SingletonModel):
                     result = TranslatedStep.objects.filter(stepik_id=pk, lang=lang)
             elif obj_type is RequestedObject.LESSON:
                 if lang is None:
+
                     result = TranslatedLesson.objects.filter(stepik_id=pk)
                 else:
                     result = TranslatedLesson.objects.filter(stepik_id=pk, lang=lang)
@@ -145,9 +153,8 @@ class ApiController(SingletonModel):
             translation_service = self.translation_services.filter(service_name=service_name.lower()).first()
             if not translation_service:
                 return None
-
             if obj_type == RequestedObject.LESSON:
-                result = translation_service.get_lesson_translated_steps(pk, lang)
+                result = TranslatedLesson.objects.filter(stepik_id=pk)
             elif obj_type == RequestedObject.STEP:
                 result = translation_service.get_step_translation(pk, lang)
         if result is None or result.exists() == 0:

@@ -16,4 +16,5 @@ class TranslatedLessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = TranslatedLesson
         fields = (
-        "stepik_id", "create_date", "update_date", "stepik_update_date", "service_name", "steps_count", "steps")
+            "pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "service_name", "steps_count",
+            "steps")
