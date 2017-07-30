@@ -52,18 +52,18 @@ class BasicApiViewSet(viewsets.GenericViewSet):
         params["lang"] = self.request.query_params.get("lang", None)
         return params
 
-    def get_record(self, **kwargs):
-        api_controller = ApiController.load()
-        return api_controller.get_translation(kwargs["obj_type"], kwargs["pk"], kwargs["service_name"], kwargs["lang"])
-
     def get_type_object(self):
         raise NotImplementedError()
+
+    def get_record(self, **kwargs):
+        api_controller = ApiController.load()
+        return api_controller.get_translation(self.get_type_object(), kwargs["pk"], kwargs["service_name"],
+                                              kwargs["lang"])
 
     def get_records(self, **kwargs):
         pass
 
     def list(self, request):
-        print("PIZDA")
         objects = self.get_records()
         if objects is None:
             return self.error_response(404)
