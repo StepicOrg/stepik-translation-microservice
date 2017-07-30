@@ -11,6 +11,7 @@ from .constants import RequestedObject
 from rest_framework import viewsets
 
 
+
 class BasicPagination(PageNumberPagination):
     page_size = 3
     page_size_query_param = 'page_size'
@@ -70,14 +71,18 @@ class BasicApiViewSet(viewsets.GenericViewSet):
         serializer = self.serializer_class(instance=objects, many=True)
         return Response(serializer.data)
 
-    def create(self, request):
-        serializer = self.get_serializer(data=request.DATA)
-        if not serializer.is_valid():
-            return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        obj = serializer.object
-        self.check_object_permissions(request, obj)
-        obj.create()
-        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+    def create(self, request, pk=None):
+        api_controller = ApiController.load()
+        # TODO put it in another place
+        api_controller.stepik_oauth()
+        params = self.get_params()
+        obj = api_controller.create_translation(self.get_type_object(), params["pk"], params["service_name"],
+                                                params["lang"])
+
+        if obj is None:
+            return self.error_response(404)
+        serializer = self.serializer_class(instance=obj)
+        return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
         obj = self.get_queryset()
