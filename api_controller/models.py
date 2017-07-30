@@ -2,8 +2,9 @@ from django.db import models
 from django.conf import settings
 from translation.models import TranslatedLesson, TranslatedStep
 from django.core.cache import cache
+from datetime import datetime
 
-from.constants import RequestedObject
+from .constants import RequestedObject
 
 import requests
 
@@ -86,25 +87,35 @@ class ApiController(SingletonModel):
                 texts.append(step['block']['text'])
         return texts
 
+    # :returns: created translation or None if service_name is None or can't be parsed or
+    # if Stepik API returned 404 or have no permission
     def create_translation(self, obj_type, pk, service_name=None, lang=None):
+        if service_name is None:
+            return None
         translation_service = self.translation_services.filter(service_name=service_name.lower())
         if not translation_service:
             return None
-
+        # convert queryset to object, yes it's guarenteed that service is the only one
+        translation_service = translation_service[0]
         if obj_type is RequestedObject.STEP:
+
             translation = self.get_translation(obj_type, pk, service_name, lang)
             if translation is not None:
                 return translation
-            created = self.fetch_stepik_object(obj_type, pk)
+            created = self.fetch_stepik_object(obj_type.value, pk)
             if created is None:
                 return None
-            ts = None
+            created_step = None
             translated_text = translation_service.create_step_translation(created['block']['text'], lang=lang)
-            tl = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name)
-            ts = TranslatedStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
-                                               text=translated_text, lesson=tl)
+            created_lesson = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name,
+                                                             stepik_update_date=datetime.now())
+            datetime_obj = datetime.strptime(created['update_date'], "%Y-%m-%dT%H:%M:%SZ")
+            created_step = TranslatedStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
+                                                         text=translated_text,
+                                                         stepik_update_date=datetime_obj,
+                                                         lesson=created_lesson)
 
-            return ts
+            return created_step
         elif obj_type is RequestedObject.LESSON:
             translation = self.get_translation(obj_type, pk, service_name, lang)
             if translation is not None:

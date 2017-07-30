@@ -35,16 +35,7 @@ class YandexTranslator(object):
         else:
             return None
 
-    # :param text: step's text in html format
-    # :param lang: step's lang
-    # :returns: TranslatedStep object or None
-    def create_step_translation(self, text, **kwargs):
-        final_url = self.base_url
-        params = ["?{0}={1}".format("key", self.api_key), "&{0}={1}".format("text", text)]
-        for name, value in kwargs.items():
-            params.append("&{0}={1}".format(name, value))
-        response = requests.get(final_url + "".join(params)).json()
-        return response['text']
+
 
     # :param pk: step's stepik_id
     # :param new_text: new translation of step's text
@@ -159,3 +150,14 @@ class TranslationService(models.Model):
             raise AttributeError  # the service hasn't been instantiated yet
         # delegate all unknown lookups to the service object
         return getattr(self.service, name)
+
+    # :param text: step's text in html format
+    # :param lang: step's lang
+    # :returns: TranslatedStep object or None
+    def create_step_translation(self, text, **kwargs):
+        final_url = self.base_url
+        params = ["?{0}={1}".format("key", self.api_key), "&{0}={1}".format("text", text)]
+        for name, value in kwargs.items():
+            params.append("&{0}={1}".format(name, value))
+        response = requests.get(final_url + "".join(params)).json()
+        return response['text']
