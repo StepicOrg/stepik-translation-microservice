@@ -81,7 +81,7 @@ class BasicApiViewSet(viewsets.GenericViewSet):
 
         if obj is None:
             return self.error_response(404)
-        serializer = self.serializer_class(instance=obj, many=True)
+        serializer = self.serializer_class(instance=obj)
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):

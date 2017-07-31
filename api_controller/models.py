@@ -91,7 +91,7 @@ class ApiController(SingletonModel):
                 texts.append((step['block']['text'], self.from_str_to_datetime(step['update_date'])))
         return texts
 
-    # :returns: created translation queryset or None if service_name is None or can't be parsed or
+    # :returns: created translation object or None if service_name is None or can't be parsed or
     # if Stepik API returned 404 or have no permission
     def create_translation(self, obj_type, pk, service_name=None, lang=None):
         if service_name is None:
@@ -125,9 +125,10 @@ class ApiController(SingletonModel):
 
             return created_step
         elif obj_type is RequestedObject.LESSON:
-            translation = self.get_translation(obj_type, pk, service_name, lang).first()
+            translation = self.get_translation(obj_type, pk, service_name, lang)
             # second cond. if we have already translated lesson's steps to lang
-            if translation is not None and translation.steps.filter(lang=lang).count() == translation.steps_count:
+            if translation is not None and translation.first().steps.filter(
+                    lang=lang).count() == translation.first().steps_count:
                 return translation
 
             stepik_lesson = self.fetch_stepik_object(obj_type.value, pk)
@@ -136,7 +137,7 @@ class ApiController(SingletonModel):
 
             lesson = None
             # if lesson already exists, but we didn't translate all steps
-            if translation and translation.steps.filter(lang=lang).count() != translation.steps_count:
+            if translation and translation.first().steps.filter(lang=lang).count() != translation.steps_count:
                 lesson = translation
             else:
                 datetime_obj = datetime.strptime(stepik_lesson['update_date'], "%Y-%m-%dT%H:%M:%SZ")
@@ -144,7 +145,7 @@ class ApiController(SingletonModel):
                                                          stepik_update_date=datetime_obj,
                                                          steps_count=len(stepik_lesson["steps"]))
 
-            texts = self.steps_text_with_date(stepik_lesson['steps'])
+            texts = self.steps_text_with_dates(stepik_lesson['steps'])
             translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang, )
             return lesson
 
