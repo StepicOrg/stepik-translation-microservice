@@ -19,7 +19,7 @@ private:
 
 **/api/available-languages**
 * *GET* `courses/<stepik_id>/?translation_service=<>` - get `available-languages` for course
-* *GET* `lessons/<stepik_id>/translation_service=<>` - get `available-languages` for lesson
+* *GET* `lessons/<stepik_id>/?translation_service=<>` - get `available-languages` for lesson
 * *GET* `steps/<stepik_id>/?translation_service=<>` - get `available-languages` for step
 
 
