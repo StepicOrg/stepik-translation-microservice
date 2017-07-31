@@ -6,6 +6,7 @@ from django.dispatch import receiver
 class Translation(models.Model):
     class Meta:
         abstract = True
+        ordering = ["stepik_id"]
 
     stepik_id = models.IntegerField()
     create_date = models.DateTimeField(auto_now_add=True)
