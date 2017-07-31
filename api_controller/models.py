@@ -94,12 +94,8 @@ class ApiController(SingletonModel):
     # :returns: created translation object or None if service_name is None or can't be parsed or
     # if Stepik API returned 404 or have no permission
     def create_translation(self, obj_type, pk, service_name=None, lang=None):
-        if service_name is None:
-            return None
-        try:
-            # convert queryset to object, yes it's guarenteed that service is the only one
-            translation_service = self.translation_services.get(service_name=service_name.lower())
-        except Exception:
+        translation_service = self.get_service(service_name)
+        if not translation_service:
             return None
 
         if obj_type is RequestedObject.STEP:
@@ -168,7 +164,7 @@ class ApiController(SingletonModel):
                 else:
                     result = TranslatedLesson.objects.filter(stepik_id=pk)
         else:
-            translation_service = self.translation_services.filter(service_name=service_name.lower()).first()
+            translation_service = self.get_service(service_name)
             if not translation_service:
                 return None
             if obj_type == RequestedObject.LESSON:
@@ -180,7 +176,7 @@ class ApiController(SingletonModel):
         return result
 
     def get_available_languages(self, obj_type, service_name, pk):
-        translation_service = self.translation_services.filter(service_name=service_name.lower())
+        translation_service = self.get_service(service_name)
         if not translation_service:
             return None
 
@@ -198,7 +194,16 @@ class ApiController(SingletonModel):
         # TODO add get_service for every method
 
     def get_translational_ratio(self, pk, obj_type, lang=None, service_name=None):
-        translation_service = self.translation_services.filter(service_name=service_name.lower())
+        translation_service = self.get_service(service_name)
         if not translation_service:
             return None
         return translation_service.get_translation_ratio(pk, obj_type, lang)
+
+    def get_service(self, service_name):
+        if service_name is None:
+            return None
+        try:
+            # convert queryset to object, yes it's guarenteed that service is the only one
+            return self.translation_services.get(service_name=service_name.lower())
+        except Exception:
+            return None
