@@ -11,7 +11,6 @@ from .constants import RequestedObject
 from rest_framework import viewsets
 
 
-
 class BasicPagination(PageNumberPagination):
     page_size = 3
     page_size_query_param = 'page_size'
@@ -162,3 +161,20 @@ class TranslationalRatio(GenericAPIView):
         else:
             serializer = serializers.FloatField(data)
             return Response(serializer.data)
+
+
+class AvailableLanguages(GenericAPIView):
+    def get(self, request, obj_type, pk, format=None):
+        api_controller = ApiController.load()
+        service_name = None
+        obj_type = RequestedObject(obj_type[:-1])
+
+        if self.request.query_params.get("service_name"):
+            service_name = self.request.query_params.get("service_name")
+
+        data = api_controller.get_available_languages(pk, obj_type, service_name)
+
+        if data is None:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response(data)

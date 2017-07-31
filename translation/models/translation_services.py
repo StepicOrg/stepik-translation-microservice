@@ -113,15 +113,19 @@ class TranslationService(models.Model):
                 TranslatedStep.objects.create(stepik_id=id, lang=lang, text=translated_text, lesson=lesson,
                                               service_name=self.service_name, stepik_update_date=texts[i][1])
 
-    # :returns: json of languages used in step's translation
-    def get_available_languages(self):
-        all_steps = TranslatedStep.objects.filter(service_name=self.service_name)
+    # :returns: json of languages used in step's translation for obj_type instance
+    def get_available_languages(self, pk, obj_type):
+        steps = None
+        if obj_type == RequestedObject.STEP:
+            steps = TranslatedStep.objects.filter(stepik_id=pk, service_name=self.service_name)
+        elif obj_type == RequestedObject.LESSON:
+            lesson = TranslatedLesson.objects.filter(stepik_id=pk, service_name=self.service_name)
+            steps = lesson.first().steps.all()
         unique_languages = set()
-        # http://blog.etianen.com/blog/2013/06/08/django-querysets/
-        for step in all_steps.iterator():
+        for step in steps:
             if step.lang not in unique_languages:
                 unique_languages.add(step.lang)
-        return json.dumps(list(unique_languages))
+        return list(unique_languages) if steps else None
 
     def get_translation_ratio(self, pk, obj_type, lang):
         if obj_type is RequestedObject.LESSON:
