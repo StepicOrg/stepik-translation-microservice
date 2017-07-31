@@ -123,9 +123,8 @@ STATIC_URL = '/static/'
 
 # Credentials for translate services
 
-YANDEX_API_KEY = env("YANDEX_API_KEY", default="")
+YANDEX_API_KEY = env("YANDEX_API_KEY")
 
-# TODO change to normal behavior
 GOOGLE_API_KEY = env("GOOGLE_API_KEY", default="")
 
 AZURE_API_KEY = env("AZURE_API_KEY", default="")

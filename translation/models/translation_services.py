@@ -99,6 +99,7 @@ class TranslationService(models.Model):
         step.save()
         return True
 
+    # void function, which creates translation of all steps in lesson
     def create_lesson_translation(self, pk, ids, texts, lang):
         lesson = TranslatedLesson.objects.get(stepik_id=pk)
         for i, id in enumerate(ids):
