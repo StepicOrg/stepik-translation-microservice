@@ -39,6 +39,9 @@ class ApiController(SingletonModel):
     api_host = models.CharField(max_length=255, default="https://stepik.org")
     token = None
 
+    def from_str_to_datetime(self, str):
+        return datetime.strptime(str, "%Y-%m-%dT%H:%M:%SZ")
+
     def stepik_oauth(self):
 
         auth = requests.auth.HTTPBasicAuth(self.oauth_credentials["client_id"], self.oauth_credentials["client_secret"])
@@ -77,14 +80,15 @@ class ApiController(SingletonModel):
     def fetch_stepik_lesson(self, pk):
         return self.fetch_stepik_object("lesson", pk)
 
-    def steps_text(self, ids):
+    # :returns: list of tuples(text, update_date)
+    def steps_text_with_dates(self, ids):
         texts = []
         steps = self.fetch_stepik_objects("step", ids)
         for step in steps:
             if step is None or 'text' not in step['block']:
                 texts.append("")
             else:
-                texts.append(step['block']['text'])
+                texts.append((step['block']['text'], self.from_str_to_datetime(step['update_date'])))
         return texts
 
     # :returns: created translation queryset or None if service_name is None or can't be parsed or
@@ -109,11 +113,11 @@ class ApiController(SingletonModel):
             created_step = None
             lesson = self.fetch_stepik_object("lesson", created['lesson'])
             translated_text = translation_service.create_step_translation(created['block']['text'], lang=lang)
-            datetime_obj = datetime.strptime(lesson['update_date'], "%Y-%m-%dT%H:%M:%SZ")
+            datetime_obj = self.from_str_to_datetime(lesson['update_date'])
             created_lesson = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name,
                                                              stepik_update_date=datetime_obj,
                                                              steps_count=len(lesson["steps"]))
-            datetime_obj = datetime.strptime(created['update_date'], "%Y-%m-%dT%H:%M:%SZ")
+            datetime_obj = self.from_str_to_datetime(created['update_date'])
             created_step = TranslatedStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
                                                          text=translated_text,
                                                          stepik_update_date=datetime_obj,
@@ -121,18 +125,30 @@ class ApiController(SingletonModel):
 
             return created_step
         elif obj_type is RequestedObject.LESSON:
-            translation = self.get_translation(obj_type, pk, service_name, lang)
-            if translation is not None:
+            translation = self.get_translation(obj_type, pk, service_name, lang).first()
+            # second cond. if we have already translated lesson's steps to lang
+            if translation is not None and translation.steps.filter(lang=lang).count() == translation.steps_count:
                 return translation
-            stepik_lesson = self.fetch_stepik_object(obj_type, pk)
+
+            stepik_lesson = self.fetch_stepik_object(obj_type.value, pk)
             if stepik_lesson is None:
                 return None
-            new_lesson = TranslatedLesson.objects.create(stepik_id=pk, service_name="yandex")
-            texts = self.steps_text(stepik_lesson['steps'])
-            translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
-            return new_lesson
 
-    #:returns queryset translation
+            lesson = None
+            # if lesson already exists, but we didn't translate all steps
+            if translation and translation.steps.filter(lang=lang).count() != translation.steps_count:
+                lesson = translation
+            else:
+                datetime_obj = datetime.strptime(stepik_lesson['update_date'], "%Y-%m-%dT%H:%M:%SZ")
+                lesson = TranslatedLesson.objects.create(stepik_id=pk, service_name=service_name,
+                                                         stepik_update_date=datetime_obj,
+                                                         steps_count=len(stepik_lesson["steps"]))
+
+            texts = self.steps_text_with_date(stepik_lesson['steps'])
+            translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang, )
+            return lesson
+
+    # :returns queryset translation
     def get_translation(self, obj_type, pk, service_name=None, lang=None):
 
         result = None
@@ -152,8 +168,7 @@ class ApiController(SingletonModel):
             if not translation_service:
                 return None
             if obj_type == RequestedObject.LESSON:
-                # TODO change to normal behavior
-                result = TranslatedLesson.objects.filter(stepik_id=pk)
+                result = translation_service.get_lesson_translation(pk)
             elif obj_type == RequestedObject.STEP:
                 result = translation_service.get_step_translation(pk, lang)
         if result is None or result.exists() == 0:
