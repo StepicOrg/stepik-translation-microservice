@@ -136,6 +136,13 @@ class TranslatedLessonViewSet(BasicApiViewSet):
             qs = qs.filter(service_name=self.request.query_params["service_name"])
         return qs.order_by("pk")
 
+    def retrieve(self, request, pk=None):
+        obj = self.get_queryset()
+        if obj is None:
+            return self.error_response(404)
+        serializer = self.serializer_class(instance=obj, many=True, context={"lang": self.get_params()["lang"]})
+        return Response(serializer.data)
+
 
 class TranslationalRatio(GenericAPIView):
     def get(self, request, obj_type, pk, format=None):
