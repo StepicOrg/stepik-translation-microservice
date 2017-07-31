@@ -110,18 +110,21 @@ class ApiController(SingletonModel):
             created = self.fetch_stepik_object(obj_type.value, pk)
             if created is None:
                 return None
-            created_step = None
+            created_step, lesson_keeper = None, None
             lesson = self.fetch_stepik_object("lesson", created['lesson'])
-            translated_text = translation_service.create_step_translation(created['block']['text'], lang=lang)
+            translated_text = translation_service.create_text_translation(created['block']['text'], lang=lang)
             datetime_obj = self.from_str_to_datetime(lesson['update_date'])
-            created_lesson = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name,
-                                                             stepik_update_date=datetime_obj,
-                                                             steps_count=len(lesson["steps"]))
+            if TranslatedLesson.objects.filter(stepik_id=lesson["id"]).exists():
+                lesson_keeper = TranslatedLesson.objects.filter(stepik_id=lesson["id"]).first()
+            else:
+                lesson_keeper = TranslatedLesson.objects.create(stepik_id=created['lesson'], service_name=service_name,
+                                                                stepik_update_date=datetime_obj,
+                                                                steps_count=len(lesson["steps"]))
             datetime_obj = self.from_str_to_datetime(created['update_date'])
             created_step = TranslatedStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
                                                          text=translated_text,
                                                          stepik_update_date=datetime_obj,
-                                                         lesson=created_lesson)
+                                                         lesson=lesson_keeper)
 
             return created_step
         elif obj_type is RequestedObject.LESSON:
