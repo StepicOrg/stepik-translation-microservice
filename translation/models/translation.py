@@ -25,12 +25,6 @@ class TranslatedLesson(models.Model):
     service_name = models.CharField(max_length=40)
     steps_count = models.IntegerField(default=0)
 
-    def get_languages(self):
-        unique_languages = set()
-        for step in self.steps.all():
-            unique_languages.add(step.lang)
-        return unique_languages
-
 
 class TranslatedStep(Translation):
     lesson = models.ForeignKey(TranslatedLesson, on_delete=models.PROTECT, related_name="steps")

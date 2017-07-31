@@ -53,6 +53,7 @@ class ApiController(SingletonModel):
             return False
         return True
 
+    # :returns stepik_object or None if any errors occured during call STEPIK API
     def fetch_stepik_object(self, obj_class, obj_id):
         api_url = '{}/api/{}s/{}'.format(self.api_host, obj_class, obj_id)
         response = requests.get(api_url,
@@ -148,7 +149,7 @@ class ApiController(SingletonModel):
             translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang, )
             return lesson
 
-    # :returns queryset translation
+    # :returns queryset translation or None if params are bad
     def get_translation(self, obj_type, pk, service_name=None, lang=None):
 
         result = None
@@ -175,24 +176,26 @@ class ApiController(SingletonModel):
             return None
         return result
 
+    # :returns: list of languages in which stepik_object translation is available
     def get_available_languages(self, pk, obj_type, service_name):
         translation_service = self.get_service(service_name)
         if not translation_service:
             return None
-
         return translation_service.get_available_languages(pk, obj_type)
 
+    # :returns: float percent indicating what part of stepik_object is translated in given language
     def get_translational_ratio(self, pk, obj_type, lang=None, service_name=None):
         translation_service = self.get_service(service_name)
         if not translation_service:
             return None
         return translation_service.get_translation_ratio(pk, obj_type, lang)
 
+    # :returns TranslationService object or None if name isn't parsed or we haven't service with such name
     def get_service(self, service_name):
         if service_name is None:
             return None
         try:
-            # convert queryset to object, yes it's guarenteed that service is the only one
+            # convert queryset to object, yes it's guaranteed that service is the only one
             return self.translation_services.get(service_name=service_name.lower())
         except Exception:
             return None

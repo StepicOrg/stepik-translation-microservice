@@ -157,9 +157,9 @@ class TranslationalRatio(GenericAPIView):
         data = api_controller.get_translational_ratio(pk, obj_type, lang, service_name)
 
         if data is None:
-            return self.error_response(404)
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
         else:
-            serializer = serializers.FloatField(data)
+            serializer = serializers.FloatField(instance=data)
             return Response(serializer.data)
 
 
