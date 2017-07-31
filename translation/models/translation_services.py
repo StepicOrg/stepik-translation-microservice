@@ -3,7 +3,6 @@ from django.db import models
 from django.conf import settings
 from api_controller.constants import RequestedObject
 
-
 import requests
 import json
 
@@ -24,20 +23,6 @@ class YandexTranslator(object):
         self.api_key = settings.YANDEX_API_KEY
 
     # :param pk: step's stepik_id
-    # :param lang: step's lang
-    # :returns: TranslatedStep object or None
-    def get_step_translation(self, pk, lang, **kwargs):
-        steps = TranslatedStep.objects.filter(stepik_id=pk)
-        if lang is None and steps:
-            return steps
-        elif lang is not None:
-            return steps.filter(lang=lang)
-        else:
-            return None
-
-
-
-    # :param pk: step's stepik_id
     # :param new_text: new translation of step's text
     # :param lang: step's lang
     # :returns: True or False
@@ -47,51 +32,6 @@ class YandexTranslator(object):
         step.text = new_text
         step.save()
         return True
-
-    # :param pk: lesson's stepik_id
-    # :param lang: step's lang
-    # :returns: json of steps ids
-    def get_lesson_translated_steps(self, pk, lang, **kwargs):
-        qs = TranslatedLesson.objects.filter(pk=pk)
-        if not qs:
-            return None
-        else:
-            lesson = qs[0]
-        ids = []
-        for step in lesson.steps:
-            ids.append(step.pk)
-        return json.dumps(ids)
-
-    # :param pk: lesson's stepik_id
-    # :param lang: step's lang
-    # :returns: json of steps ids
-    def translate_lesson(self, pk, lang):
-
-        ids = self.get_lesson_translated_steps(pk, lang)
-        if ids is not None:
-            return ids
-        else:
-            # TODO implement Stepik API logic
-            stepik_ids = [1, 2, 3]
-            text = "gfadsf"
-            ids = []
-            for id in stepik_ids:
-                step = self.create_step_translation(id, lang, text, pk)
-                ids.append(step)
-            return json.dumps(ids)
-
-    def create_lesson_translation(self, pk, ids, texts, lang):
-        lesson = TranslatedLesson.objects.get(stepik_id=pk)
-        for id, i in enumerate(ids):
-            step = TranslatedStep.objects.filter(stepik_id=id, lang=lang)
-            if step:
-                step.lesson = lesson
-                step.save()
-            else:
-                # don't send empty strings to translation
-                translated_text = texts[i] if not texts[i] else self.create_step_translation(texts[i], lang=lang)
-                TranslatedStep.objects.create(stepik_id=id, lang=lang, text=translated_text, lesson=lesson,
-                                              service_name="yandex")
 
     # :returns: json of languages used in step's translation
     def get_available_languages(self):
@@ -151,13 +91,43 @@ class TranslationService(models.Model):
         # delegate all unknown lookups to the service object
         return getattr(self.service, name)
 
+    # :param pk: step's stepik_id
+    # :param lang: step's lang
+    # :returns: TranslatedStep queryset or None
+    def get_step_translation(self, pk, lang, **kwargs):
+        steps = TranslatedStep.objects.filter(stepik_id=pk, service_name=self.service_name)
+        if lang is None and steps:
+            return steps
+        elif lang is not None:
+            return steps.filter(lang=lang)
+        else:
+            return None
+
+    def get_lesson_translation(self, pk, **kwargs):
+        lesson = TranslatedLesson.objects.filter(stepik_id=pk, service_name=self.service_name)
+        return lesson if lesson else None
+
     # :param text: step's text in html format
     # :param lang: step's lang
-    # :returns: TranslatedStep object or None
-    def create_step_translation(self, text, **kwargs):
+    # :returns: translated text or None if translation failed
+    def create_text_translation(self, text, **kwargs):
+        # TODO problem with access
         final_url = self.base_url
         params = ["?{0}={1}".format("key", self.api_key), "&{0}={1}".format("text", text)]
         for name, value in kwargs.items():
             params.append("&{0}={1}".format(name, value))
         response = requests.get(final_url + "".join(params)).json()
         return response['text']
+
+    def create_lesson_translation(self, pk, ids, texts, lang):
+        lesson = TranslatedLesson.objects.get(stepik_id=pk)
+        for id, i in enumerate(ids):
+            step = TranslatedStep.objects.filter(stepik_id=id, lang=lang)
+            if step:
+                step.lesson = lesson
+                step.save()
+            else:
+                # don't send empty strings to translation
+                translated_text = texts[i] if not texts[i] else self.create_text_translation(texts[i][0], lang=lang)
+                TranslatedStep.objects.create(stepik_id=id, lang=lang, text=translated_text, lesson=lesson,
+                                              service_name=self.service_name, stepik_update_date=texts[i][1])
