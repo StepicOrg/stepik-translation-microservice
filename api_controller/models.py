@@ -166,7 +166,7 @@ class ApiController(SingletonModel):
                 if lang is None:
                     result = TranslatedLesson.objects.filter(stepik_id=pk)
                 else:
-                    result = TranslatedLesson.objects.filter(stepik_id=pk, lang=lang)
+                    result = TranslatedLesson.objects.filter(stepik_id=pk)
         else:
             translation_service = self.translation_services.filter(service_name=service_name.lower()).first()
             if not translation_service:

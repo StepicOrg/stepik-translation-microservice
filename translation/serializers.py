@@ -3,8 +3,16 @@ from translation.models import TranslatedStep
 from translation.models import TranslatedLesson
 
 
+class FilteredListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        if "lang" in self.context and self.context["lang"] is not None:
+            data = data.filter(lang=self.context["lang"])
+        return super(FilteredListSerializer, self).to_representation(data)
+
+
 class TranslatedStepSerializer(serializers.ModelSerializer):
     class Meta:
+        list_serializer_class = FilteredListSerializer
         model = TranslatedStep
         fields = (
             "pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "lang", "text", "service_name")
