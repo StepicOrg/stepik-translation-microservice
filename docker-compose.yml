@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  web:
+    restart: always
+    build: ./web
+    env_file: ./web/.env
+    volumes:
+      - ./web:/code
+    # The command key overrides the default image command (gunicorn server),
+    # allowing auto-code reload in development.
+    # The command is tweaked to allow the local server to be accessed
+    # by cross-origin requests (by binding to system IP 0.0.0.0 rather than localhost).
+    # See: https://stackoverflow.com/questions/5768797/manage-py-runserver
+    command: python manage.py runserver 0.0.0.0:8000
+    depends_on:
+      - postgres
+
+  # Technically, we could access the server using port 8000 without in dev.
+  # But, running the proxy, and accessing the server through it on port 80, mirrors
+  # the exact production environment.
+  nginx:
+    restart: always
+    build: ./nginx/
+    ports:
+      - "80:80"
+    volumes:
+      - /www/static
+
+  postgres:
+    restart: always
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    volumes:
+      - /var/lib/postgresql/data/

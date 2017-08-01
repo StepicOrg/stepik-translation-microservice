@@ -1,4 +1,5 @@
 # our application builds from official python image
+# also if we wanna minimize size of container, use python:alpine
 FROM python:3.5
 # not to use buffer
 ENV PYTHONUNBUFFERED 1
