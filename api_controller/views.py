@@ -143,38 +143,28 @@ class TranslatedLessonViewSet(BasicApiViewSet):
         return Response(serializer.data)
 
 
-class TranslationalRatio(GenericAPIView):
-    def get(self, request, obj_type, pk, format=None):
+class TranslationalRatioViewSet(BasicApiViewSet):
+    def get_record(self, **kwargs):
         api_controller = ApiController.load()
-        service_name, lang = None, None
-        obj_type = RequestedObject(obj_type[:-1])
+        return api_controller.get_translational_ratio(kwargs["pk"], kwargs["obj_type"], kwargs["lang"],
+                                                      kwargs["service_name"])
 
-        if self.request.query_params.get("service_name"):
-            service_name = self.request.query_params.get("service_name")
-        if self.request.query_params.get("lang"):
-            lang = self.request.query_params.get("lang")
-
-        data = api_controller.get_translational_ratio(pk, obj_type, lang, service_name)
-
-        if data is None:
+    def retrieve(self, request, obj_type, pk=None):
+        obj = self.get_queryset()
+        if obj is None:
             return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
         else:
-            serializer = serializers.FloatField(instance=data)
-            return Response(serializer.data)
+            # serializer = serializers.FloatField(instance=obj)
+            return Response(obj)
 
 
-class AvailableLanguages(GenericAPIView):
-    def get(self, request, obj_type, pk, format=None):
+class AvailableLanguagesViewSet(BasicApiViewSet):
+    def get_record(self, **kwargs):
         api_controller = ApiController.load()
-        service_name = None
-        obj_type = RequestedObject(obj_type[:-1])
+        return api_controller.get_available_languages(kwargs["pk"], kwargs["obj_type"], kwargs["service_name"])
 
-        if self.request.query_params.get("service_name"):
-            service_name = self.request.query_params.get("service_name")
-
-        data = api_controller.get_available_languages(pk, obj_type, service_name)
-
-        if data is None:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            return Response(data)
+    def retrieve(self, request, obj_type, pk=None):
+        obj = self.get_queryset()
+        if obj is None:
+            return self.error_response(404)
+        return Response(obj)
