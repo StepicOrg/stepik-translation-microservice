@@ -1,14 +1,14 @@
-from rest_framework.response import Response
-from rest_framework import status
-from api_controller.models import ApiController
-from translation.serializers import TranslatedStepSerializer, TranslatedLessonSerializer
-from translation.models import TranslatedStep, TranslatedLesson
 import collections
-from rest_framework.generics import GenericAPIView
-from rest_framework.pagination import PageNumberPagination
-from rest_framework import serializers
-from .constants import RequestedObject
+
+from rest_framework import status
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from translation.models import TranslatedStep, TranslatedLesson
+from translation.serializers import TranslatedStepSerializer, TranslatedLessonSerializer
+
+from web.api_controller.models import ApiController
+from .constants import RequestedObject
 
 
 class BasicPagination(PageNumberPagination):

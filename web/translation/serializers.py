@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from translation.models import TranslatedStep
-from translation.models import TranslatedLesson
+
+from web.translation import TranslatedLesson
+from web.translation import TranslatedStep
 
 
 class FilteredListSerializer(serializers.ListSerializer):

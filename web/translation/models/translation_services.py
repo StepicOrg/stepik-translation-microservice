@@ -1,10 +1,9 @@
-from .translation import TranslatedStep, TranslatedLesson
-from django.db import models
-from django.conf import settings
-from api_controller.constants import RequestedObject
-
 import requests
-import json
+from django.conf import settings
+from django.db import models
+
+from web.api_controller.constants import RequestedObject
+from .translation import TranslatedStep, TranslatedLesson
 
 
 class GoogleTranslator(object):
