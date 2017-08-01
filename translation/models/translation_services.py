@@ -94,7 +94,7 @@ class TranslationService(models.Model):
     # :returns: True or False
     def update_step_translation(self, pk, lang, new_text):
         qs = TranslatedStep.objects.filter(pk=pk, lang=lang, service_name=self.obj.service_name)
-        step = self.obj.create_step_translation(new_text, lang=lang) if not qs else qs[0]
+        step = self.obj.create_text_translation(new_text, lang=lang) if not qs else qs[0]
         step.text = new_text
         step.save()
         return True
@@ -121,7 +121,11 @@ class TranslationService(models.Model):
             steps = TranslatedStep.objects.filter(stepik_id=pk, service_name=self.service_name)
         elif obj_type == RequestedObject.LESSON:
             lesson = TranslatedLesson.objects.filter(stepik_id=pk, service_name=self.service_name)
+            if not lesson:
+                return None
             steps = lesson.first().steps.all()
+        if not steps:
+            return None
         unique_languages = set()
         for step in steps:
             if step.lang not in unique_languages:
@@ -130,12 +134,15 @@ class TranslationService(models.Model):
 
     def get_translation_ratio(self, pk, obj_type, lang):
         if obj_type is RequestedObject.LESSON:
-            lesson = TranslatedLesson.objects.get(stepik_id=pk)
+            try:
+                lesson = TranslatedLesson.objects.get(stepik_id=pk)
+            except TranslatedLesson.DoesNotExist:
+                return 0
             translated = 0
-            for step in lesson.step:
+            for step in lesson.steps.all():
                 if step.lang == lang:
                     translated += 1
             try:
-                return translated / lesson.amount_steps
+                return translated / lesson.steps_count
             except ZeroDivisionError:
                 return 0
