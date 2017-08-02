@@ -4,7 +4,8 @@ FROM python:3.5
 # not to use buffer
 ENV PYTHONUNBUFFERED 1
 
-RUN mkdir /code # make dir /code
+# make dir /code
+RUN mkdir /code
 # set it workdir
 WORKDIR /code
 # add requirements from current dir to /code
