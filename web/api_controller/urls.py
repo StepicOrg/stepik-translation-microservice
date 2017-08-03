@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from web.api_controller.views import TranslatedStepViewSet, TranslatedLessonViewSet, AvailableLanguagesViewSet, \
+from api_controller.views import TranslatedStepViewSet, TranslatedLessonViewSet, AvailableLanguagesViewSet, \
     TranslationalRatioViewSet
 
 steps_detail = TranslatedStepViewSet.as_view({

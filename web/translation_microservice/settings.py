@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     # Apps:
     'translation_microservice',
     'api_controller',
-    'translation'
+    'translation',
 ]
 
 MIDDLEWARE = [

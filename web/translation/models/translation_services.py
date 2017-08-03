@@ -2,7 +2,7 @@ import requests
 from django.conf import settings
 from django.db import models
 
-from web.api_controller.constants import RequestedObject
+from api_controller.constants import RequestedObject
 from .translation import TranslatedStep, TranslatedLesson
 
 

@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from translation.models import TranslatedStep, TranslatedLesson
 from translation.serializers import TranslatedStepSerializer, TranslatedLessonSerializer
 
-from web.api_controller.models import ApiController
+from api_controller.models import ApiController
 from .constants import RequestedObject
 
 
