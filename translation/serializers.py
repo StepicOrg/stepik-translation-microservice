@@ -7,6 +7,7 @@ class FilteredListSerializer(serializers.ListSerializer):
     def to_representation(self, data):
         if "lang" in self.context and self.context["lang"] is not None:
             data = data.filter(lang=self.context["lang"])
+        data = data.order_by("position")
         return super(FilteredListSerializer, self).to_representation(data)
 
 
@@ -15,7 +16,8 @@ class TranslatedStepSerializer(serializers.ModelSerializer):
         list_serializer_class = FilteredListSerializer
         model = TranslatedStep
         fields = (
-            "pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "lang", "text", "service_name")
+            "pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "lang", "text", "service_name",
+            "position")
 
 
 class TranslatedLessonSerializer(serializers.ModelSerializer):

@@ -27,6 +27,7 @@ class TranslatedLesson(models.Model):
 
 
 class TranslatedStep(Translation):
+    position = models.IntegerField(default=1)
     lesson = models.ForeignKey(TranslatedLesson, on_delete=models.PROTECT, related_name="steps")
 
 
