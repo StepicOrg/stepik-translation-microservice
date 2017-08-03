@@ -121,7 +121,7 @@ class ApiController(SingletonModel):
             created_step = TranslatedStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
                                                          text=translated_text,
                                                          stepik_update_date=datetime_obj,
-                                                         lesson=lesson_keeper)
+                                                         lesson=lesson_keeper, position=created['position'])
 
             return created_step
         elif obj_type is RequestedObject.LESSON:
