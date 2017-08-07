@@ -8,7 +8,7 @@ steps_detail = TranslatedStepViewSet.as_view({
     "put": "update"
 })
 
-steps_list = TranslatedLessonViewSet.as_view({"get": "list"})
+steps_list = TranslatedStepViewSet.as_view({"get": "list"})
 
 lesson_detail = TranslatedLessonViewSet.as_view({
     "get": "retrieve",
