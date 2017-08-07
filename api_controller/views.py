@@ -9,32 +9,13 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import serializers
 from .constants import RequestedObject
 from rest_framework import viewsets
-
-
-class BasicPagination(PageNumberPagination):
-    page_size = 3
-    page_size_query_param = 'page_size'
-    max_page_size = 20
-
-    def get_paginated_response(self, data):
-        has_next, has_previous = False, False
-        if self.get_next_link():
-            has_next = True
-        if self.get_previous_link():
-            has_previous = True
-
-        meta = collections.OrderedDict([
-            ('page', self.page.number),
-            ('has_next', has_next),
-            ('has_previous', has_previous),
-        ])
-        ret = collections.OrderedDict(meta=meta)
-        ret["results"] = data
-        return Response(ret)
+from api_controller.serializers import PaginationDecorator, SerializerTypeDataDecorator
+from django.core.paginator import Page
 
 
 class BasicApiViewSet(viewsets.GenericViewSet):
     serializer_class = None
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         params = self.get_params()
@@ -63,11 +44,16 @@ class BasicApiViewSet(viewsets.GenericViewSet):
     def get_records(self, **kwargs):
         pass
 
+    def get_serializer(self, instance=None, many=False, data=None):
+        base_serializer = self.serializer_class(instance=instance, many=True)
+        decorated_serializer = SerializerTypeDataDecorator(base_serializer, self.get_type_object())
+        return PaginationDecorator(decorated_serializer)
+
     def list(self, request):
         objects = self.get_records()
         if objects is None:
             return self.error_response(404)
-        serializer = self.serializer_class(instance=objects, many=True)
+        serializer = self.get_serializer(instance=objects, many=True)
         return Response(serializer.data)
 
     def create(self, request, pk=None):
@@ -80,15 +66,19 @@ class BasicApiViewSet(viewsets.GenericViewSet):
 
         if obj is None:
             return self.error_response(404)
-        serializer = self.serializer_class(instance=obj)
+        serializer = self.get_serializer(instance=obj)
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
         obj = self.get_queryset()
-        if obj is None:
-            return self.error_response(404)
-        serializer = self.serializer_class(instance=obj, many=True)
-        return Response(serializer.data)
+        print("MASTER", obj)
+        print(self.paginator)
+        page = self.get_paginated_response(obj)
+        print(page)
+        if page is not None:
+            serializer = self.get_serializer(instance=page, many=True)
+            return Response(serializer.data)
+        return self.error_response(404)
 
     def update(self, request, pk=None):
         pass
@@ -107,7 +97,6 @@ class BasicApiViewSet(viewsets.GenericViewSet):
 
 
 class TranslatedStepViewSet(BasicApiViewSet):
-    pagination_class = BasicPagination
     serializer_class = TranslatedStepSerializer
 
     def get_type_object(self):
@@ -123,7 +112,7 @@ class TranslatedStepViewSet(BasicApiViewSet):
 
 
 class TranslatedLessonViewSet(BasicApiViewSet):
-    pagination_class = BasicPagination
+    pagination_class = PageNumberPagination
     serializer_class = TranslatedLessonSerializer
 
     def get_type_object(self):
