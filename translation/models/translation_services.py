@@ -33,7 +33,7 @@ class YandexTranslator(object):
         # if text is long html, &lang param isn't parsed properly
         params.append("&{0}={1}".format("text", text))
         response = requests.get(final_url + "".join(params)).json()
-        return response['text']
+        return " ".join(response['text'])
 
 
 class TranslationService(models.Model):
