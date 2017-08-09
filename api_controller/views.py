@@ -4,19 +4,16 @@ from api_controller.models import ApiController
 from translation.serializers import TranslatedStepSerializer, TranslatedLessonSerializer
 from translation.models import TranslatedStep, TranslatedLesson
 import collections
-from rest_framework.generics import GenericAPIView
-from rest_framework.pagination import PageNumberPagination
-from rest_framework import serializers
 from .constants import RequestedObject
 from rest_framework import viewsets
 from api_controller.serializers import PaginationDecorator
-from django.core.paginator import Page
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from rest_framework import serializers
 
 
 class BasicApiViewSet(viewsets.GenericViewSet):
     serializer_class = None
-    paginate_by = 3
+    paginate_by = 3  # how many objs for displaying on 1 page
 
     def get_queryset(self):
         params = self.get_params()
@@ -45,13 +42,11 @@ class BasicApiViewSet(viewsets.GenericViewSet):
     def get_records(self, **kwargs):
         pass
 
-    def get_serializer(self, instance=None, many=False, data=None):
-        base_serializer = self.serializer_class(instance=instance, many=True)
-
+    def get_serializer(self, instance=None, many=False, context=None, data=None):
+        base_serializer = self.serializer_class(instance=instance, many=True, context=context)
         paginator = Paginator(base_serializer.data, self.paginate_by)
 
         page = self.request.GET.get('page')
-
         try:
             objs = paginator.page(page)
         except PageNotAnInteger:
@@ -124,7 +119,6 @@ class TranslatedStepViewSet(BasicApiViewSet):
 
 
 class TranslatedLessonViewSet(BasicApiViewSet):
-    pagination_class = PageNumberPagination
     serializer_class = TranslatedLessonSerializer
 
     def get_type_object(self):
@@ -140,23 +134,17 @@ class TranslatedLessonViewSet(BasicApiViewSet):
         obj = self.get_queryset()
         if obj is None:
             return self.error_response(404)
-        serializer = self.serializer_class(instance=obj, many=True, context={"lang": self.get_params()["lang"]})
+        serializer = self.get_serializer(instance=obj, many=True, context={"lang": self.get_params()["lang"]})
         return Response(serializer.data)
 
 
 class TranslationalRatioViewSet(BasicApiViewSet):
+    serializer_class = serializers.FloatField
+
     def get_record(self, **kwargs):
         api_controller = ApiController.load()
         return api_controller.get_translational_ratio(kwargs["pk"], kwargs["obj_type"], kwargs["lang"],
                                                       kwargs["service_name"])
-
-    def retrieve(self, request, obj_type, pk=None):
-        obj = self.get_queryset()
-        if obj is None:
-            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            # serializer = serializers.FloatField(instance=obj)
-            return Response(obj)
 
 
 class AvailableLanguagesViewSet(BasicApiViewSet):
