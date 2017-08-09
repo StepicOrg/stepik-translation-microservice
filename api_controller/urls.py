@@ -24,7 +24,7 @@ ratio_detail = TranslationalRatioViewSet.as_view({"get": "retrieve"})
 
 urlpatterns = [
     url(r'^api/translation/steps/(?P<pk>[0-9]+)$', steps_detail, name="step-datail"),
-    url(r'^api/translation/steps/', steps_list, name="step-list"),
+    url(r'^api/translation/steps/$', steps_list, name="step-list"),
     url(r'^api/translation/lessons/(?P<pk>[0-9]+)$', lesson_detail, name="lesson-detail"),
     url(r'^api/translation/lessons/', lesson_list, name="lesson-list"),
     url(r'^api/translational_ratio/(?P<obj_type>[a-z]+)/(?P<pk>[0-9]+)$', ratio_detail, name="translational_ratio"),

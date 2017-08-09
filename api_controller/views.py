@@ -13,7 +13,7 @@ from rest_framework import serializers
 
 class BasicApiViewSet(viewsets.GenericViewSet):
     serializer_class = None
-    paginate_by = 3  # how many objs for displaying on 1 page
+    paginate_by = 20  # how many objs for displaying on 1 page
 
     def get_queryset(self):
         params = self.get_params()
