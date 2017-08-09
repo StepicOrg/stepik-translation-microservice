@@ -13,7 +13,7 @@ class FilteredListSerializer(serializers.ListSerializer):
 
 class TranslatedStepSerializer(serializers.ModelSerializer):
     class Meta:
-        list_serializer_class = FilteredListSerializer
+        #list_serializer_class = FilteredListSerializer
         model = TranslatedStep
         fields = (
             "pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "lang", "text", "service_name",
