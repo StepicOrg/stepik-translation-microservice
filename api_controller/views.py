@@ -9,13 +9,14 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import serializers
 from .constants import RequestedObject
 from rest_framework import viewsets
-from api_controller.serializers import PaginationDecorator, SerializerTypeDataDecorator
+from api_controller.serializers import PaginationDecorator
 from django.core.paginator import Page
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 class BasicApiViewSet(viewsets.GenericViewSet):
     serializer_class = None
-    pagination_class = PageNumberPagination
+    paginate_by = 3
 
     def get_queryset(self):
         params = self.get_params()
@@ -46,8 +47,23 @@ class BasicApiViewSet(viewsets.GenericViewSet):
 
     def get_serializer(self, instance=None, many=False, data=None):
         base_serializer = self.serializer_class(instance=instance, many=True)
-        decorated_serializer = SerializerTypeDataDecorator(base_serializer, self.get_type_object())
-        return PaginationDecorator(decorated_serializer)
+
+        paginator = Paginator(base_serializer.data, self.paginate_by)
+
+        page = self.request.GET.get('page')
+
+        try:
+            objs = paginator.page(page)
+        except PageNotAnInteger:
+            objs = paginator.page(1)
+        except EmptyPage:
+            objs = paginator.page(paginator.num_pages)
+
+        final_objs = collections.OrderedDict({
+            "page": objs,
+            "type": self.get_type_object().value
+        })
+        return PaginationDecorator(final_objs)
 
     def list(self, request):
         objects = self.get_records()
@@ -71,12 +87,8 @@ class BasicApiViewSet(viewsets.GenericViewSet):
 
     def retrieve(self, request, pk=None):
         obj = self.get_queryset()
-        print("MASTER", obj)
-        print(self.paginator)
-        page = self.get_paginated_response(obj)
-        print(page)
-        if page is not None:
-            serializer = self.get_serializer(instance=page, many=True)
+        if obj is not None:
+            serializer = self.get_serializer(instance=obj, many=True)
             return Response(serializer.data)
         return self.error_response(404)
 
