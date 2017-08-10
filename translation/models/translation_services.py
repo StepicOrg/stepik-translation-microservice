@@ -26,14 +26,16 @@ class YandexTranslator(object):
     # :param lang: step's lang
     # :returns: translated text or None if translation failed
     def create_text_translation(self, text, **kwargs):
-        final_url = self.obj.base_url
-        params = ["?{0}={1}".format("key", self.api_key)]
-        for name, value in kwargs.items():
-            params.append("&{0}={1}".format(name, value))
-        # if text is long html, &lang param isn't parsed properly
-        params.append("&{0}={1}".format("text", text))
-        response = requests.get(final_url + "".join(params)).json()
-        return " ".join(response['text'])
+        if text:
+            final_url = self.obj.base_url
+            params = ["?{0}={1}".format("key", self.api_key)]
+            for name, value in kwargs.items():
+                params.append("&{0}={1}".format(name, value))
+            # if text is long html, &lang param isn't parsed properly
+            params.append("&{0}={1}".format("text", text))
+            response = requests.get(final_url + "".join(params)).json()
+            return " ".join(response['text'])
+        return ""
 
 
 class TranslationService(models.Model):

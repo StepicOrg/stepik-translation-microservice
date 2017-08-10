@@ -1,14 +1,16 @@
-from rest_framework.response import Response
-from rest_framework import status
-from api_controller.models import ApiController
-from translation.serializers import TranslatedStepSerializer, TranslatedLessonSerializer
-from translation.models import TranslatedStep, TranslatedLesson
 import collections
-from .constants import RequestedObject
-from rest_framework import viewsets
-from api_controller.serializers import PaginationDecorator
+
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from rest_framework import serializers
+from rest_framework import status
+from rest_framework import viewsets
+from rest_framework.response import Response
+
+from api_controller.models import ApiController
+from api_controller.serializers import PaginationDecorator
+from translation.models import TranslatedStep, TranslatedLesson
+from translation.serializers import TranslatedStepSerializer, TranslatedLessonSerializer
+from .constants import RequestedObject
 
 
 class BasicApiViewSet(viewsets.GenericViewSet):
@@ -72,9 +74,12 @@ class BasicApiViewSet(viewsets.GenericViewSet):
         # TODO put it in another place
         api_controller.stepik_oauth()
         params = self.get_params()
+
+        if not self.check_required_params(params):
+            return self.error_response(404)
+
         obj = api_controller.create_translation(self.get_type_object(), params["pk"], params["service_name"],
                                                 params["lang"])
-
         if obj is None:
             return self.error_response(404)
         serializer = self.get_serializer(instance=obj)
@@ -101,6 +106,12 @@ class BasicApiViewSet(viewsets.GenericViewSet):
             return Response({'detail': 'Successfully created.'}, status=status.HTTP_201_CREATED)
         elif number_success == 204:
             return Response({'detail': 'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+
+    def check_required_params(self, params):
+        for k, v in params.items():
+            if not v and k is not "obj_type":
+                return False
+        return True
 
 
 class TranslatedStepViewSet(BasicApiViewSet):
