@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-from translation.models import TranslatedLesson
-from translation.models import TranslatedStep
+from translation.models import TranslatedLesson, TranslatedCourse, TranslatedStep
 
 
 class FilteredListSerializer(serializers.ListSerializer):
@@ -29,3 +28,12 @@ class TranslatedLessonSerializer(serializers.ModelSerializer):
         fields = (
             "pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "service_name", "steps_count",
             "steps")
+
+
+class TranslatedCourseSerializer(serializers.ModelSerializer):
+    lessons = TranslatedLesson
+
+    class Meta:
+        model = TranslatedCourse
+        fields = (
+            "pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "service_name", "steps_count")

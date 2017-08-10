@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from api_controller.models import ApiController
 from api_controller.serializers import PaginationDecorator
 from translation.models import TranslatedStep, TranslatedLesson
-from translation.serializers import TranslatedStepSerializer, TranslatedLessonSerializer
+from translation.serializers import TranslatedStepSerializer, TranslatedLessonSerializer, TranslatedCourseSerializer
 from .constants import RequestedObject
 
 
@@ -171,6 +171,7 @@ class TranslationalRatioViewSet(BasicApiViewSet):
         api_controller = ApiController.load()
         return api_controller.get_translational_ratio(kwargs["pk"], kwargs["obj_type"], kwargs["lang"],
                                                       kwargs["service_name"])
+
     def retrieve(self, request, obj_type=None, pk=None):
         obj = self.get_queryset()
         if obj is None:
@@ -183,6 +184,7 @@ class TranslationalRatioViewSet(BasicApiViewSet):
         ret = collections.OrderedDict(meta=meta)
         ret["translational_ratio"] = obj
         return Response(ret)
+
 
 class AvailableLanguagesViewSet(BasicApiViewSet):
     def get_record(self, **kwargs):
@@ -203,3 +205,10 @@ class AvailableLanguagesViewSet(BasicApiViewSet):
         ret = collections.OrderedDict(meta=meta)
         ret["available_languages"] = obj
         return Response(ret)
+
+
+class TranslatedCourseViewSet(BasicApiViewSet):
+    serializer_class = TranslatedCourseSerializer
+
+    def get_type_object(self):
+        return RequestedObject.COURSE
