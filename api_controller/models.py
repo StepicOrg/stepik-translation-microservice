@@ -122,8 +122,8 @@ class ApiController(SingletonModel):
                                                          text=translated_text,
                                                          stepik_update_date=datetime_obj,
                                                          lesson=lesson_keeper, position=created['position'])
-
-            return created_step
+            qs = TranslatedStep.objects.filter(pk=created_step.pk)
+            return qs
         elif obj_type is RequestedObject.LESSON:
             translation = self.get_translation(obj_type, pk, service_name, lang)
             # second cond. if we have already translated lesson's steps to lang
@@ -146,8 +146,9 @@ class ApiController(SingletonModel):
                                                          steps_count=len(stepik_lesson["steps"]))
 
             texts = self.steps_text_with_dates(stepik_lesson['steps'])
-            translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang, )
-            return lesson
+            translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
+            qs = TranslatedLesson.objects.filter(pk=lesson.pk)
+            return qs
 
     # :returns queryset translation or None if params are bad
     def get_translation(self, obj_type, pk, service_name=None, lang=None):
