@@ -171,15 +171,35 @@ class TranslationalRatioViewSet(BasicApiViewSet):
         api_controller = ApiController.load()
         return api_controller.get_translational_ratio(kwargs["pk"], kwargs["obj_type"], kwargs["lang"],
                                                       kwargs["service_name"])
-
+    def retrieve(self, request, obj_type=None, pk=None):
+        obj = self.get_queryset()
+        if obj is None:
+            return self.error_response(404)
+        meta = collections.OrderedDict([
+            ('page', 1),
+            ('has_next', False),
+            ('has_previous', False),
+        ])
+        ret = collections.OrderedDict(meta=meta)
+        ret["translational_ratio"] = obj
+        return Response(ret)
 
 class AvailableLanguagesViewSet(BasicApiViewSet):
     def get_record(self, **kwargs):
         api_controller = ApiController.load()
         return api_controller.get_available_languages(kwargs["pk"], kwargs["obj_type"], kwargs["service_name"])
 
-    def retrieve(self, request, obj_type, pk=None):
+    def retrieve(self, request, obj_type=None, pk=None):
         obj = self.get_queryset()
+        if not isinstance(obj, list):
+            obj = [obj]
         if obj is None:
             return self.error_response(404)
-        return Response(obj)
+        meta = collections.OrderedDict([
+            ('page', 1),
+            ('has_next', False),
+            ('has_previous', False),
+        ])
+        ret = collections.OrderedDict(meta=meta)
+        ret["available_languages"] = obj
+        return Response(ret)

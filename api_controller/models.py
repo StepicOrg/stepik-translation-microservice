@@ -92,7 +92,7 @@ class ApiController(SingletonModel):
                 texts.append((step['block']['text'], self.from_str_to_datetime(step['update_date'])))
         return texts
 
-    # :returns: qs with created translation object or None if service_name is None or can't be parsed or
+    # :returns: queryset with created translation object or None if service_name is None or can't be parsed or
     # if Stepik API returned 404 or have no permission
     def create_translation(self, obj_type, pk, service_name=None, lang=None):
         translation_service = self.get_service(service_name)
@@ -122,8 +122,7 @@ class ApiController(SingletonModel):
                                                          text=translated_text,
                                                          stepik_update_date=datetime_obj,
                                                          lesson=lesson_keeper, position=created['position'])
-            qs = TranslatedStep.objects.filter(pk=created_step.pk)
-            return qs
+            return TranslatedStep.objects.filter(pk=created_step.pk)
         elif obj_type is RequestedObject.LESSON:
             translation = self.get_translation(obj_type, pk, service_name, lang)
             # second cond. if we have already translated lesson's steps to lang
@@ -147,8 +146,7 @@ class ApiController(SingletonModel):
 
             texts = self.steps_text_with_dates(stepik_lesson['steps'])
             translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
-            qs = TranslatedLesson.objects.filter(pk=lesson.pk)
-            return qs
+            return TranslatedLesson.objects.filter(pk=lesson.pk)
 
     # :returns queryset translation or None if params are bad
     def get_translation(self, obj_type, pk, service_name=None, lang=None):
@@ -177,15 +175,14 @@ class ApiController(SingletonModel):
             return None
         return result
 
-    # :returns: qs with one updated instance
+    # :returns: queryset with one updated instance
     def update_translation(self, obj_type, pk, text=None, service_name=None, lang=None):
         if obj_type == RequestedObject.STEP:
             result = TranslatedStep.objects.filter(stepik_id=pk, service_name=service_name, lang=lang).first()
             if result:
                 result.text = text
                 result.save()
-                qs = TranslatedStep.objects.filter(pk=result.pk)
-                return qs
+                return TranslatedStep.objects.filter(pk=result.pk)
         return None
 
     # :returns: list of languages in which stepik_object translation is available
