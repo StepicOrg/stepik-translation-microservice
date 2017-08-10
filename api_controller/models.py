@@ -92,7 +92,7 @@ class ApiController(SingletonModel):
                 texts.append((step['block']['text'], self.from_str_to_datetime(step['update_date'])))
         return texts
 
-    # :returns: created translation object or None if service_name is None or can't be parsed or
+    # :returns: qs with created translation object or None if service_name is None or can't be parsed or
     # if Stepik API returned 404 or have no permission
     def create_translation(self, obj_type, pk, service_name=None, lang=None):
         translation_service = self.get_service(service_name)
@@ -177,18 +177,15 @@ class ApiController(SingletonModel):
             return None
         return result
 
-    # :returns: updated instance
+    # :returns: qs with one updated instance
     def update_translation(self, obj_type, pk, text=None, service_name=None, lang=None):
-        params = [obj_type, pk, service_name, lang, text]
-        for param in params:
-            if param is None:
-                return None
         if obj_type == RequestedObject.STEP:
             result = TranslatedStep.objects.filter(stepik_id=pk, service_name=service_name, lang=lang).first()
             if result:
                 result.text = text
                 result.save()
-                return result
+                qs = TranslatedStep.objects.filter(pk=result.pk)
+                return qs
         return None
 
     # :returns: list of languages in which stepik_object translation is available

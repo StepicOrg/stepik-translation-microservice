@@ -132,11 +132,15 @@ class TranslatedStepViewSet(BasicApiViewSet):
         params = self.get_params()
         params["text"] = self.request.query_params.get("text", None)
         api_controller = ApiController.load()
+
+        if not self.check_required_params(params):
+            return self.error_response(404)
+
         data = api_controller.update_translation(self.get_type_object(), params["pk"], params["text"],
                                                  params["service_name"], params["lang"])
         if data is None:
             return self.error_response(404)
-        serializer = TranslatedStepSerializer(instance=data)
+        serializer = self.get_serializer(instance=data, many=True)
         return Response(serializer.data)
 
 
