@@ -17,6 +17,15 @@ class Translation(models.Model):
     service_name = models.CharField(max_length=40)
 
 
+class TranslatedCourse(models.Model):
+    stepik_id = models.IntegerField()
+    create_date = models.DateTimeField(auto_now_add=True)
+    update_date = models.DateTimeField(auto_now=True)
+    stepik_update_date = models.DateTimeField(blank=False)
+    service_name = models.CharField(max_length=40)
+    steps_count = models.IntegerField(default=0)
+
+
 class TranslatedLesson(models.Model):
     stepik_id = models.IntegerField(unique=True)
     create_date = models.DateTimeField(auto_now_add=True)
@@ -24,6 +33,7 @@ class TranslatedLesson(models.Model):
     stepik_update_date = models.DateTimeField(blank=False)
     service_name = models.CharField(max_length=40)
     steps_count = models.IntegerField(default=0)
+    course = models.ForeignKey(TranslatedCourse, on_delete=models.SET_NULL, related_name="lessons", null=True)
 
 
 class TranslatedStep(Translation):
@@ -37,17 +47,8 @@ def update_lesson_date(sender, instance, **kwargs):
     qs.update(update_date=instance.update_date)
 
 
-class TranslatedCourse(models.Model):
-    stepik_id = models.IntegerField()
-    create_date = models.DateTimeField(auto_now_add=True)
-    update_date = models.DateTimeField(auto_now=True)
-    stepik_update_date = models.DateTimeField(blank=False)
-    service_name = models.CharField(max_length=40)
-    steps_count = models.IntegerField(default=0)
-    lessons = models.ForeignKey(TranslatedLesson, on_delete=models.PROTECT, related_name="course")
-
-
 @receiver(post_save, sender=TranslatedLesson, dispatch_uid="update_course_date")
-def update_lesson_date(sender, instance, **kwargs):
-    qs = TranslatedCourse.objects.filter(id=instance.course.pk)
-    qs.update(update_date=instance.update_date)
+def update_course_date(sender, instance, **kwargs):
+    if instance.course is not None:
+        qs = TranslatedCourse.objects.filter(id=instance.course.pk)
+        qs.update(update_date=instance.update_date)

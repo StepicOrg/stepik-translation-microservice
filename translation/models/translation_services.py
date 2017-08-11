@@ -136,8 +136,7 @@ class TranslationService(models.Model):
                 return None
             steps = []
             for lesson in course.lessons.all():
-                for step in lesson.steps.all():
-                    steps.append(step)
+                steps.extend(lesson.steps.all())  # if queryset is empty, nothing happened
         if not steps:
             return None
         unique_languages = set()
