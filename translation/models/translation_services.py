@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db import models
 
 from api_controller.constants import RequestedObject
-from .translation import TranslatedStep, TranslatedLesson
+from .translation import TranslatedStep, TranslatedLesson, TranslatedCourse
 
 
 class GoogleTranslator(object):
@@ -89,6 +89,11 @@ class TranslationService(models.Model):
         lesson = TranslatedLesson.objects.filter(stepik_id=pk, service_name=self.service_name)
         return lesson if lesson else None
 
+    # :returns TranslatedCourse queryset or None
+    def get_course_translation(self, pk, **kwargs):
+        course = TranslatedCourse.objects.filter(stepik_id=pk, service_name=self.service_name)
+        return course if course else None
+
     # :param pk: step's stepik_id
     # :param new_text: new translation of step's text
     # :param lang: step's lang
@@ -125,6 +130,14 @@ class TranslationService(models.Model):
             if not lesson:
                 return None
             steps = lesson.first().steps.all()
+        elif obj_type == RequestedObject.LESSON:
+            course = TranslatedLesson.objects.filter(stepik_id=pk, service_name=self.service_name)
+            if not course:
+                return None
+            steps = []
+            for lesson in course.lessons.all():
+                for step in lesson.steps.all():
+                    steps.append(step)
         if not steps:
             return None
         unique_languages = set()
@@ -146,4 +159,18 @@ class TranslationService(models.Model):
             try:
                 return translated / lesson.steps_count
             except ZeroDivisionError:
+                return 0
+        elif obj_type is RequestedObject.COURSE:
+            try:
+                course = TranslatedCourse.objects.get(stepik_id=pk)
+            except TranslatedCourse.DoesNotExist:
+                return 0
+            translated = 0
+            for lesson in course.lessons.all():
+                for step in lesson.steps.all():
+                    if step.lang == lang:
+                        translated += 1
+            try:
+                return translated / course.steps_count
+            except TranslatedCourse.DoesNotExist:
                 return 0
