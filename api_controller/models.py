@@ -111,7 +111,7 @@ class ApiController(SingletonModel):
 
     # :returns: qs with created translation object or None if service_name is None or can't be parsed or
     # if Stepik API returned 404 or have no permission
-    def create_translation(self, obj_type, pk, service_name=None, lang=None):
+    def create_translation(self, obj_type, pk, service_name=None, lang=None, **kwargs):
         translation_service = self.get_service(service_name)
         if not translation_service:
             return None
@@ -146,8 +146,10 @@ class ApiController(SingletonModel):
             if translation is not None and translation.first().steps.filter(
                     lang=lang).count() == translation.first().steps_count:
                 return translation
-
-            stepik_lesson = self.fetch_stepik_object(obj_type.value, pk)
+            if "stepik_lesson" in kwargs:
+                stepik_lesson = self.kwargs["stepik_lesson"]
+            else:
+                stepik_lesson = self.fetch_stepik_object(obj_type.value, pk)
             if stepik_lesson is None:
                 return None
 
@@ -160,7 +162,8 @@ class ApiController(SingletonModel):
                 lesson = TranslatedLesson.objects.create(stepik_id=pk, service_name=service_name,
                                                          stepik_update_date=datetime_obj,
                                                          steps_count=len(stepik_lesson["steps"]))
-
+            if "course" in self.kwargs:
+                lesson.course = self.kwargs["course"]
             texts = self.steps_text_with_dates(stepik_lesson['steps'])
             translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
             return TranslatedLesson.objects.filter(pk=lesson.pk)
@@ -180,7 +183,9 @@ class ApiController(SingletonModel):
                                                      stepik_update_date=datetime_obj,
                                                      steps_count=steps_count)
 
-            # TODO add lesson translation
+            for lesson in stepik_lessons:
+                self.create_translation(RequestedObject.LESSON, lesson["id"], service_name, lang, stepik_lesson=lesson,
+                                        course=course)
             return TranslatedCourse.objects.filter(pk=course.pk)
 
     # :returns queryset translation or None if params are bad
