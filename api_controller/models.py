@@ -92,8 +92,7 @@ class ApiController(SingletonModel):
                 texts.append((step['block']['text'], self.from_str_to_datetime(step['update_date'])))
         return texts
 
-    # :returns: queryset with created translation object or None if service_name is None or can't be parsed or
-
+    # :returns: tuple, consisting of amount of steps in course and stepik's lessons
     def get_course_info(self, pk):
         course = self.fetch_stepik_object('course', pk)
         sections = self.fetch_stepik_objects('section', course['sections'])
@@ -147,7 +146,7 @@ class ApiController(SingletonModel):
                     lang=lang).count() == translation.first().steps_count:
                 return translation
             if "stepik_lesson" in kwargs:
-                stepik_lesson = self.kwargs["stepik_lesson"]
+                stepik_lesson = kwargs["stepik_lesson"]
             else:
                 stepik_lesson = self.fetch_stepik_object(obj_type.value, pk)
             if stepik_lesson is None:
@@ -162,8 +161,9 @@ class ApiController(SingletonModel):
                 lesson = TranslatedLesson.objects.create(stepik_id=pk, service_name=service_name,
                                                          stepik_update_date=datetime_obj,
                                                          steps_count=len(stepik_lesson["steps"]))
-            if "course" in self.kwargs:
-                lesson.course = self.kwargs["course"]
+            if "course" in kwargs:
+                lesson.course = kwargs["course"]
+                lesson.save()
             texts = self.steps_text_with_dates(stepik_lesson['steps'])
             translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
             return TranslatedLesson.objects.filter(pk=lesson.pk)
@@ -177,7 +177,7 @@ class ApiController(SingletonModel):
             if stepik_course is None:
                 return None
             course = None
-            steps_count, stepik_lessons = self.get_course_info(course["id"])
+            steps_count, stepik_lessons = self.get_course_info(stepik_course["id"])
             datetime_obj = datetime.strptime(stepik_course['update_date'], "%Y-%m-%dT%H:%M:%SZ")
             course = TranslatedCourse.objects.create(stepik_id=pk, service_name=service_name,
                                                      stepik_update_date=datetime_obj,
