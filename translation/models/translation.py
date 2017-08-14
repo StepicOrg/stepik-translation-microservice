@@ -9,6 +9,13 @@ class StepSource(Enum):
     CHOICE = 0
     MATCHING = 1
 
+    @staticmethod
+    def convert_to_choice(str):
+        if str.lower() == "choice":
+            return StepSource.CHOICE
+        elif str.lower() == "matching":
+            return StepSource.MATCHING
+
 
 class Translation(models.Model):
     class Meta:

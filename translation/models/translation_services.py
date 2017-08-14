@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db import models
 
 from api_controller.constants import RequestedObject
-from .translation import TranslatedStep, TranslatedLesson, TranslatedCourse
+from .translation import TranslatedStep, TranslatedLesson, TranslatedCourse, StepSource
 
 
 class GoogleTranslator(object):
@@ -24,16 +24,36 @@ class YandexTranslator(object):
     # :param text: step's text in html format
     # :param lang: step's lang
     # :returns: translated text or None if translation failed
-    def create_text_translation(self, text, **kwargs):
+    def create_text_translation(self, text, payload=False, **kwargs):
         if text:
             final_url = self.obj.base_url
             params = ["?{0}={1}".format("key", self.api_key)]
             for name, value in kwargs.items():
                 params.append("&{0}={1}".format(name, value))
             # if text is long html, &lang param isn't parsed properly
-            params.append("&{0}={1}".format("text", text))
-            response = requests.get(final_url + "".join(params)).json()
-            return " ".join(response['text'])
+            if payload:
+                if isinstance(text[0], tuple):
+                    new_text = []
+                    for text_pair in text:
+                        new_text.extend(list(text_pair))
+
+                    text = ",".join(new_text)
+                    params.append("&{0}={1}".format("text", text))
+                    response = requests.get(final_url + "".join(params)).json()
+                    translated_texts = [x.strip() for x in response['text'].split(',')]
+                    ret = []
+                    for i in range(0, len(translated_texts), 2):
+                        ret.append((translated_texts[i], translated_texts[i + 1]))
+                    return ret
+                else:
+                    text = ",".join(text)
+                    params.append("&{0}={1}".format("text", text))
+                    response = requests.get(final_url + "".join(params)).json()
+                    return [x.strip() for x in response['text'].split(',')]
+            else:
+                params.append("&{0}={1}".format("text", text))
+                response = requests.get(final_url + "".join(params)).json()
+                return " ".join(response['text'])
         return ""
 
 
@@ -80,9 +100,14 @@ class TranslationService(models.Model):
         if lang is None and steps:
             return steps
         elif lang is not None:
-            return steps.filter(lang=lang)
-        else:
-            return None
+            return steps.filter(lang=lang)  # if steps are None, return None
+
+    def get_step_source_translation(self, pk, lang, **kwargs):
+        step_sources = TranslatedStep.objects.filter(stepik_id=pk, service_name=self.service_name)
+        if lang is None and step_sources:
+            return step_sources
+        elif lang is not None:
+            return step_sources.filter(lang=lang)  # if step_sources are None, return None
 
     # :returns: TranslatedLesson queryset or None
     def get_lesson_translation(self, pk, **kwargs):
@@ -119,6 +144,25 @@ class TranslationService(models.Model):
                                                                                                    lang=lang)
                 TranslatedStep.objects.create(stepik_id=id, lang=lang, text=translated_text, lesson=lesson,
                                               service_name=self.service_name, stepik_update_date=texts[i][1])
+
+    # :returns: translated source of step-source
+    def create_step_source_translation(self, json, lang, type):
+        if type == StepSource.CHOICE:
+            options = json["options"]
+            texts = [option["text"] for option in options]
+            texts = self.create_text_translation(texts, True, lang=lang)
+            for i in range(len(texts)):
+                options[i]["text"] = texts[i]
+            json["options"] = options
+        elif type == StepSource.MATCHING:
+            pairs = json["pairs"]
+            texts = []
+            for pair in pairs:
+                texts.append((pair["first"], pair["second"]))
+            texts = self.create_text_translation(texts, True, lang=lang)
+            pairs = [{"first": text[0], "second": text[1]} for text in texts]
+            json["pairs"] = pairs
+        return json
 
     # :returns: json of languages used in step's translation for obj_type instance
     def get_available_languages(self, pk, obj_type):

@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import models
 
-from translation.models import TranslatedLesson, TranslatedStep, TranslatedCourse
+from translation.models import TranslatedLesson, TranslatedStep, TranslatedCourse, TranslatedStepSource
 from .constants import RequestedObject
 
 
@@ -187,6 +187,25 @@ class ApiController(SingletonModel):
                 self.create_translation(RequestedObject.LESSON, lesson["id"], service_name, lang, stepik_lesson=lesson,
                                         course=course)
             return TranslatedCourse.objects.filter(pk=course.pk)
+        elif obj_type is RequestedObject.STEP_SOURCE:
+            translation = self.get_translation(obj_type, pk, service_name, lang)
+            if translation is not None:
+                return translation
+
+            stepik_step_source = self.fetch_stepik_object(obj_type.value, pk)
+            if stepik_step_source is None:
+                return None
+            step_source = None
+            translated_source = translation_service.create_step_source_translation(
+                stepik_step_source['block']['source'],
+                lang, translation.StepSource.convert_to_choice(stepik_step_source["block"]["name"]))
+            datetime_obj = self.from_str_to_datetime(stepik_step_source['update_date'])
+            step_source = TranslatedStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
+                                                        source=translated_source,
+                                                        stepik_update_date=datetime_obj,
+                                                        type=translation.StepSource.convert_to_choice(
+                                                            stepik_step_source["block"]["name"]))
+            return TranslatedStep.objects.filter(pk=step_source.pk)
 
     # :returns queryset translation or None if params are bad
     def get_translation(self, obj_type, pk, service_name=None, lang=None):
@@ -201,6 +220,8 @@ class ApiController(SingletonModel):
                 result = TranslatedLesson.objects.filter(stepik_id=pk)
             elif obj_type is RequestedObject.COURSE:
                 result = TranslatedCourse.objects.filter(stepik_id=pk)
+            elif obj_type is RequestedObject.STEP_SOURCE:
+                result = TranslatedStepSource.objects.filter(stepik_id=pk)
         else:
             translation_service = self.get_service(service_name)
             if not translation_service:
@@ -211,6 +232,8 @@ class ApiController(SingletonModel):
                 result = translation_service.get_step_translation(pk, lang)
             elif obj_type == RequestedObject.COURSE:
                 result = translation_service.get_course_translation(pk)
+            elif obj_type == RequestedObject.STEP_SOURCE:
+                result = translation_service.get_step_source_translation(pk, lang)
         if result is None or result.exists() == 0:
             return None
         return result
@@ -223,6 +246,12 @@ class ApiController(SingletonModel):
                 result.text = text
                 result.save()
                 return TranslatedStep.objects.filter(pk=result.pk)
+        elif obj_type == RequestedObject.STEP_SOURCE:
+            result = TranslatedStepSource.objects.filter(stepik_id=pk, service_name=service_name, lang=lang).first()
+            if result:
+                result.source = text
+                result.save()
+                return TranslatedStepSource.objects.filter(pk=result.pk)
         return None
 
     # :returns: list of languages in which stepik_object translation is available
