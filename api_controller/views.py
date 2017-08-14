@@ -1,9 +1,9 @@
 import collections
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from rest_framework import serializers
+from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope
+from rest_framework import permissions, serializers, viewsets
 from rest_framework import status
-from rest_framework import viewsets
 from rest_framework.response import Response
 
 from api_controller.models import ApiController
@@ -116,6 +116,7 @@ class BasicApiViewSet(viewsets.GenericViewSet):
 
 class TranslatedStepViewSet(BasicApiViewSet):
     serializer_class = TranslatedStepSerializer
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
 
     def get_type_object(self):
         return RequestedObject.STEP

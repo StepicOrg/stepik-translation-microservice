@@ -1,4 +1,5 @@
 import os
+
 import environ
 
 # Import .env to settings.py
@@ -29,6 +30,7 @@ INSTALLED_APPS = [
 
     # API framework:
     'rest_framework',
+    'oauth2_provider',
 
     # Apps:
     'translation_microservice',
@@ -98,9 +100,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+OAUTH2_PROVIDER = {
+    # this is the list of available scopes
+    'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
+    'DEFAULT_SCOPES': {'read'},
+}
+
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    )
 }
 
 # Internationalization
