@@ -1,16 +1,7 @@
-from django.contrib.postgres.fields import JSONField
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from rest_framework import serializers
 
 from translation.models import TranslatedLesson, TranslatedCourse, TranslatedStep, TranslatedStepSource
-
-
-class CustomJSONField(JSONField):
-    def get_prep_value(self, value):
-        if isinstance(value, str):
-            return value
-
-        return super(CustomJSONField, self).get_prep_value(value)
 
 
 class FilteredListSerializer(serializers.ListSerializer):
