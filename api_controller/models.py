@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import models
 
-from translation.models import TranslatedLesson, TranslatedStep, TranslatedCourse, TranslatedStepSource
+from translation.models import TranslatedLesson, TranslatedStep, TranslatedCourse, TranslatedStepSource, StepSource
 from .constants import RequestedObject
 
 
@@ -114,7 +114,6 @@ class ApiController(SingletonModel):
         translation_service = self.get_service(service_name)
         if not translation_service:
             return None
-
         if obj_type is RequestedObject.STEP:
 
             translation = self.get_translation(obj_type, pk, service_name, lang)
@@ -198,14 +197,14 @@ class ApiController(SingletonModel):
             step_source = None
             translated_source = translation_service.create_step_source_translation(
                 stepik_step_source['block']['source'],
-                lang, translation.StepSource.convert_to_choice(stepik_step_source["block"]["name"]))
+                lang, StepSource.convert_to_choice(stepik_step_source["block"]["name"]))
             datetime_obj = self.from_str_to_datetime(stepik_step_source['update_date'])
-            step_source = TranslatedStep.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
-                                                        source=translated_source,
-                                                        stepik_update_date=datetime_obj,
-                                                        type=translation.StepSource.convert_to_choice(
-                                                            stepik_step_source["block"]["name"]))
-            return TranslatedStep.objects.filter(pk=step_source.pk)
+            step_source = TranslatedStepSource.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
+                                                              source=translated_source,
+                                                              stepik_update_date=datetime_obj,
+                                                              type=StepSource.convert_to_choice(
+                                                                  stepik_step_source["block"]["name"]))
+            return TranslatedStepSource.objects.filter(pk=step_source.pk)
 
     # :returns queryset translation or None if params are bad
     def get_translation(self, obj_type, pk, service_name=None, lang=None):

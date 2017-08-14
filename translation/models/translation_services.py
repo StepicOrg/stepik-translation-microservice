@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db import models
 
 from api_controller.constants import RequestedObject
-from .translation import TranslatedStep, TranslatedLesson, TranslatedCourse, StepSource
+from .translation import TranslatedStep, TranslatedLesson, TranslatedCourse, StepSource, TranslatedStepSource
 
 
 class GoogleTranslator(object):
@@ -30,6 +30,7 @@ class YandexTranslator(object):
             params = ["?{0}={1}".format("key", self.api_key)]
             for name, value in kwargs.items():
                 params.append("&{0}={1}".format(name, value))
+            params.append("&{0}={1}".format("format", "html"))
             # if text is long html, &lang param isn't parsed properly
             if payload:
                 if isinstance(text[0], tuple):
@@ -37,19 +38,19 @@ class YandexTranslator(object):
                     for text_pair in text:
                         new_text.extend(list(text_pair))
 
-                    text = ",".join(new_text)
+                    text = " ".join(new_text)
                     params.append("&{0}={1}".format("text", text))
                     response = requests.get(final_url + "".join(params)).json()
-                    translated_texts = [x.strip() for x in response['text'].split(',')]
+                    translated_texts = [x.strip() for x in response['text'][0].split(' ')]
                     ret = []
                     for i in range(0, len(translated_texts), 2):
                         ret.append((translated_texts[i], translated_texts[i + 1]))
                     return ret
                 else:
-                    text = ",".join(text)
+                    text = " ".join(text)
                     params.append("&{0}={1}".format("text", text))
                     response = requests.get(final_url + "".join(params)).json()
-                    return [x.strip() for x in response['text'].split(',')]
+                    return [x.strip() for x in response['text'][0].split(' ')]
             else:
                 params.append("&{0}={1}".format("text", text))
                 response = requests.get(final_url + "".join(params)).json()
@@ -103,7 +104,7 @@ class TranslationService(models.Model):
             return steps.filter(lang=lang)  # if steps are None, return None
 
     def get_step_source_translation(self, pk, lang, **kwargs):
-        step_sources = TranslatedStep.objects.filter(stepik_id=pk, service_name=self.service_name)
+        step_sources = TranslatedStepSource.objects.filter(stepik_id=pk, service_name=self.service_name)
         if lang is None and step_sources:
             return step_sources
         elif lang is not None:
@@ -146,20 +147,21 @@ class TranslationService(models.Model):
                                               service_name=self.service_name, stepik_update_date=texts[i][1])
 
     # :returns: translated source of step-source
-    def create_step_source_translation(self, json, lang, type):
-        if type == StepSource.CHOICE:
+    def create_step_source_translation(self, json, lang, source_type):
+        if source_type == StepSource.CHOICE:
             options = json["options"]
             texts = [option["text"] for option in options]
             texts = self.create_text_translation(texts, True, lang=lang)
             for i in range(len(texts)):
                 options[i]["text"] = texts[i]
             json["options"] = options
-        elif type == StepSource.MATCHING:
+        elif source_type == StepSource.MATCHING:
             pairs = json["pairs"]
             texts = []
             for pair in pairs:
                 texts.append((pair["first"], pair["second"]))
             texts = self.create_text_translation(texts, True, lang=lang)
+
             pairs = [{"first": text[0], "second": text[1]} for text in texts]
             json["pairs"] = pairs
         return json
