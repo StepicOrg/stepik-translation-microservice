@@ -1,4 +1,5 @@
 import collections
+import json
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from rest_framework import serializers
@@ -220,3 +221,18 @@ class TranslatedStepSourceViewSet(BasicApiViewSet):
 
     def get_type_object(self):
         return RequestedObject.STEP_SOURCE
+
+    def update(self, request, pk, **kwargs):
+        params = self.get_params()
+        json_source = request.data
+        api_controller = ApiController.load()
+
+        if not self.check_required_params(params):
+            return self.error_response(404)
+
+        data = api_controller.update_translation(self.get_type_object(), params["pk"], json_source,
+                                                 params["service_name"], params["lang"])
+        if data is None:
+            return self.error_response(404)
+        serializer = self.get_serializer(instance=data, many=True)
+        return Response(serializer.data)
