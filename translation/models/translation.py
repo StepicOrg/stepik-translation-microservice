@@ -12,31 +12,21 @@ class Translation(models.Model):
     create_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
     stepik_update_date = models.DateTimeField(blank=False)
-    lang = models.CharField(max_length=10, blank=False)
-    text = models.TextField(blank=False)
     service_name = models.CharField(max_length=40)
 
 
-class TranslatedCourse(models.Model):
-    stepik_id = models.IntegerField()
-    create_date = models.DateTimeField(auto_now_add=True)
-    update_date = models.DateTimeField(auto_now=True)
-    stepik_update_date = models.DateTimeField(blank=False)
-    service_name = models.CharField(max_length=40)
+class TranslatedCourse(Translation):
     steps_count = models.IntegerField(default=0)
 
 
-class TranslatedLesson(models.Model):
-    stepik_id = models.IntegerField(unique=True)
-    create_date = models.DateTimeField(auto_now_add=True)
-    update_date = models.DateTimeField(auto_now=True)
-    stepik_update_date = models.DateTimeField(blank=False)
-    service_name = models.CharField(max_length=40)
+class TranslatedLesson(Translation):
     steps_count = models.IntegerField(default=0)
     course = models.ForeignKey(TranslatedCourse, on_delete=models.SET_NULL, related_name="lessons", null=True)
 
 
 class TranslatedStep(Translation):
+    lang = models.CharField(max_length=10, blank=False)
+    text = models.TextField(blank=False)
     position = models.IntegerField(default=1)
     lesson = models.ForeignKey(TranslatedLesson, on_delete=models.PROTECT, related_name="steps")
 
