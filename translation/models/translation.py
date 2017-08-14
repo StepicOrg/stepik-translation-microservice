@@ -2,18 +2,18 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from enumfields import Enum, EnumIntegerField
+from enumfields import Enum, EnumField
 
 
 class StepSource(Enum):
-    CHOICE = 0
-    MATCHING = 1
+    CHOICE = "choice"
+    MATCHING = "matching"
 
     @staticmethod
-    def convert_to_choice(str):
-        if str.lower() == "choice":
+    def convert_to_choice(name):
+        if name.lower() == "choice":
             return StepSource.CHOICE
-        elif str.lower() == "matching":
+        elif name.lower() == "matching":
             return StepSource.MATCHING
 
 
@@ -47,7 +47,7 @@ class TranslatedStep(Translation):
 
 class TranslatedStepSource(Translation):
     lang = models.CharField(max_length=10, blank=False)
-    type = EnumIntegerField(StepSource)
+    type = EnumField(StepSource)
     source = JSONField()
 
 

@@ -1,4 +1,5 @@
 from django.contrib.postgres.fields import JSONField
+from enumfields.drf.serializers import EnumSupportSerializerMixin
 from rest_framework import serializers
 
 from translation.models import TranslatedLesson, TranslatedCourse, TranslatedStep, TranslatedStepSource
@@ -8,6 +9,7 @@ class CustomJSONField(JSONField):
     def get_prep_value(self, value):
         if isinstance(value, str):
             return value
+
         return super(CustomJSONField, self).get_prep_value(value)
 
 
@@ -47,9 +49,9 @@ class TranslatedCourseSerializer(serializers.ModelSerializer):
             "pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "service_name", "steps_count")
 
 
-class TranslatedStepSourceSerializer(serializers.ModelSerializer):
-    source = CustomJSONField()
-
+class TranslatedStepSourceSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = TranslatedStepSource
-        fields = ("pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "service_name", "lang", "type")
+        fields = (
+            "pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "service_name", "lang", "type",
+            "source")
