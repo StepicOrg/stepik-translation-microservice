@@ -212,3 +212,9 @@ class TranslatedCourseViewSet(BasicApiViewSet):
 
     def get_type_object(self):
         return RequestedObject.COURSE
+
+class TranslatedStepSourceViewSet(BasicApiViewSet):
+    serializer_class = TranslatedStepSourceSerializer
+
+    def get_type_object(self):
+        return RequestedObject.STEP_SOURCE

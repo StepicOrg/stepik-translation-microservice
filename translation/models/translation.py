@@ -1,6 +1,13 @@
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from enumfields import Enum, EnumIntegerField
+
+
+class StepSource(Enum):
+    CHOICE = 0
+    MATCHING = 1
 
 
 class Translation(models.Model):
@@ -29,6 +36,12 @@ class TranslatedStep(Translation):
     text = models.TextField(blank=False)
     position = models.IntegerField(default=1)
     lesson = models.ForeignKey(TranslatedLesson, on_delete=models.PROTECT, related_name="steps")
+
+
+class TranslatedStepSource(Translation):
+    lang = models.CharField(max_length=10, blank=False)
+    type = EnumIntegerField(StepSource)
+    source = JSONField()
 
 
 @receiver(post_save, sender=TranslatedStep, dispatch_uid="update_lesson_date")
