@@ -6,5 +6,5 @@ class RequestedObject(Enum):
     STEP = 'step'
     COURSE = 'course'
     LESSON = 'lesson'
-    STEP_SOURCE = 'step_source'
+    STEP_SOURCE = 'step-source'
     SERVICE = 'service'
