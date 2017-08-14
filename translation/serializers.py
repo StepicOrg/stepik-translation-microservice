@@ -1,6 +1,14 @@
+from django.contrib.postgres.fields import JSONField
 from rest_framework import serializers
 
 from translation.models import TranslatedLesson, TranslatedCourse, TranslatedStep, TranslatedStepSource
+
+
+class CustomJSONField(JSONField):
+    def get_prep_value(self, value):
+        if isinstance(value, str):
+            return value
+        return super(CustomJSONField, self).get_prep_value(value)
 
 
 class FilteredListSerializer(serializers.ListSerializer):
@@ -40,6 +48,8 @@ class TranslatedCourseSerializer(serializers.ModelSerializer):
 
 
 class TranslatedStepSourceSerializer(serializers.ModelSerializer):
+    source = CustomJSONField()
+
     class Meta:
         model = TranslatedStepSource
-        fields = ("pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "service_name")
+        fields = ("pk", "stepik_id", "create_date", "update_date", "stepik_update_date", "service_name", "lang", "type")
