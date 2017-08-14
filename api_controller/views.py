@@ -9,7 +9,8 @@ from rest_framework.response import Response
 from api_controller.models import ApiController
 from api_controller.serializers import PaginationDecorator
 from translation.models import TranslatedStep, TranslatedLesson
-from translation.serializers import TranslatedStepSerializer, TranslatedLessonSerializer, TranslatedCourseSerializer
+from translation.serializers import TranslatedStepSerializer, TranslatedLessonSerializer, TranslatedCourseSerializer, \
+    TranslatedStepSourceSerializer
 from .constants import RequestedObject
 
 
@@ -212,6 +213,7 @@ class TranslatedCourseViewSet(BasicApiViewSet):
 
     def get_type_object(self):
         return RequestedObject.COURSE
+
 
 class TranslatedStepSourceViewSet(BasicApiViewSet):
     serializer_class = TranslatedStepSourceSerializer
