@@ -1,3 +1,5 @@
+import collections
+
 import requests
 from django.conf import settings
 from django.db import models
@@ -161,8 +163,7 @@ class TranslationService(models.Model):
             for pair in pairs:
                 texts.append((pair["first"], pair["second"]))
             texts = self.create_text_translation(texts, True, lang=lang)
-
-            pairs = [{"first": text[0], "second": text[1]} for text in texts]
+            pairs = [collections.OrderedDict([('first', text[0]), ('second', text[1])]) for text in texts]
             json["pairs"] = pairs
         return json
 
