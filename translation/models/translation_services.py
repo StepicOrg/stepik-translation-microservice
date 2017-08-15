@@ -8,6 +8,24 @@ from api_controller.constants import RequestedObject
 from .translation import TranslatedStep, TranslatedLesson, TranslatedCourse, StepSource, TranslatedStepSource
 
 
+# :param: array of texts
+#  make array with escaped symbols (";", "&", "+")
+def escape_symbols(texts):
+    for idx, step_text in enumerate(texts):
+        step_text = step_text.replace(";", "%3B")
+        step_text = step_text.replace("&", "%26")
+        step_text = step_text.replace("+", "%2B")
+        texts[idx] = step_text
+
+
+# :param array of texts
+# delete accidently happened commas. E.g. "Blue, Sky, Orage" -> "Blue SKy, Orange" -> ["Blue", "Sky,", "Orange"]
+def delete_strange_semicolons(texts):
+    for idx, text in enumerate(texts):
+        if len(text.split()) == 1:
+            texts[idx] = text.strip(',')
+
+
 class GoogleTranslator(object):
     def __init__(self, obj):
         self.obj = obj
@@ -39,11 +57,12 @@ class YandexTranslator(object):
                     new_text = []
                     for text_pair in text:
                         new_text.extend(list(text_pair))
-
+                    escape_symbols(new_text)
                     text = " ".join(new_text)
                     params.append("&{0}={1}".format("text", text))
                     response = requests.get(final_url + "".join(params)).json()
                     translated_texts = [x.strip() for x in response['text'][0].split(' ')]
+                    delete_strange_semicolons(translated_texts)
                     ret = []
                     for i in range(0, len(translated_texts), 2):
                         ret.append((translated_texts[i], translated_texts[i + 1]))
@@ -52,11 +71,13 @@ class YandexTranslator(object):
                     text = " ".join(text)
                     params.append("&{0}={1}".format("text", text))
                     response = requests.get(final_url + "".join(params)).json()
-                    return [x.strip() for x in response['text'][0].split(' ')]
+                    translated_texts = [x.strip() for x in response['text'][0].split(' ')]
+                    return delete_strange_semicolons(translated_texts)
             else:
                 params.append("&{0}={1}".format("text", text))
                 response = requests.get(final_url + "".join(params)).json()
-                return " ".join(response['text'])
+                # we use response['text'][0] as response['text'] is an array always consisting of 1 element
+                return " ".join(response['text'][0])
         return ""
 
 
