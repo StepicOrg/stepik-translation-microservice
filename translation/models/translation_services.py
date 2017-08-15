@@ -143,17 +143,6 @@ class TranslationService(models.Model):
         course = TranslatedCourse.objects.filter(stepik_id=pk, service_name=self.service_name)
         return course if course else None
 
-    # :param pk: step's stepik_id
-    # :param new_text: new translation of step's text
-    # :param lang: step's lang
-    # :returns: True or False
-    def update_step_translation(self, pk, lang, new_text):
-        qs = TranslatedStep.objects.filter(pk=pk, lang=lang, service_name=self.obj.service_name)
-        step = self.obj.create_text_translation(new_text, lang=lang) if not qs else qs[0]
-        step.text = new_text
-        step.save()
-        return True
-
     # void function, which creates translation of all steps in lesson
     def create_lesson_translation(self, pk, ids, texts, lang):
         lesson = TranslatedLesson.objects.get(stepik_id=pk)
