@@ -114,11 +114,11 @@ class ApiController(SingletonModel):
         translation_service = self.get_service(service_name)
         if not translation_service:
             return None
-        if obj_type is RequestedObject.STEP:
+        translation = self.get_translation(obj_type, pk, service_name, lang)
+        if translation is not None and obj_type is not RequestedObject.LESSON:
+            return translation
 
-            translation = self.get_translation(obj_type, pk, service_name, lang)
-            if translation is not None:
-                return translation
+        if obj_type is RequestedObject.STEP:
             created = self.fetch_stepik_object(obj_type.value, pk)
             if created is None:
                 return None
@@ -139,7 +139,6 @@ class ApiController(SingletonModel):
                                                          lesson=lesson_keeper, position=created['position'])
             return TranslatedStep.objects.filter(pk=created_step.pk)
         elif obj_type is RequestedObject.LESSON:
-            translation = self.get_translation(obj_type, pk, service_name, lang)
             # second cond. if we have already translated lesson's steps to lang
             if translation is not None and translation.first().steps.filter(
                     lang=lang).count() == translation.first().steps_count:
@@ -168,10 +167,6 @@ class ApiController(SingletonModel):
             return TranslatedLesson.objects.filter(pk=lesson.pk)
         elif obj_type is RequestedObject.COURSE:
             # we create lesson only here
-            translation = self.get_translation(obj_type, pk, service_name, lang)
-            if translation is not None:
-                return translation
-
             stepik_course = self.fetch_stepik_object(obj_type.value, pk)
             if stepik_course is None:
                 return None
@@ -187,14 +182,9 @@ class ApiController(SingletonModel):
                                         course=course)
             return TranslatedCourse.objects.filter(pk=course.pk)
         elif obj_type is RequestedObject.STEP_SOURCE:
-            translation = self.get_translation(obj_type, pk, service_name, lang)
-            if translation is not None:
-                return translation
-
             stepik_step_source = self.fetch_stepik_object(obj_type.value, pk)
             if stepik_step_source is None:
                 return None
-            step_source = None
             translated_source = translation_service.create_step_source_translation(
                 stepik_step_source['block']['source'],
                 lang, StepSource.convert_to_choice(stepik_step_source["block"]["name"]))
@@ -240,17 +230,19 @@ class ApiController(SingletonModel):
     # :returns: queryset with one updated instance
     def update_translation(self, obj_type, pk, text=None, service_name=None, lang=None):
         if obj_type == RequestedObject.STEP:
-            result = TranslatedStep.objects.filter(stepik_id=pk, service_name=service_name, lang=lang).first()
-            if result:
-                result.text = text
-                result.save()
-                return TranslatedStep.objects.filter(pk=result.pk)
+            step = TranslatedStep.objects.filter(stepik_id=pk, service_name=service_name, lang=lang).first()
+            if step:
+                step.text = text
+                step.save()
+                return TranslatedStep.objects.filter(pk=step.pk)
         elif obj_type == RequestedObject.STEP_SOURCE:
-            result = TranslatedStepSource.objects.filter(stepik_id=pk, service_name=service_name, lang=lang).first()
-            if result:
-                result.source = text
-                result.save()
-                return TranslatedStepSource.objects.filter(pk=result.pk)
+            step_source = TranslatedStepSource.objects.filter(stepik_id=pk, service_name=service_name,
+                                                              lang=lang).first()
+            json_dict = text
+            if step_source:
+                step_source.source = json_dict
+                step_source.save()
+                return TranslatedStepSource.objects.filter(pk=step_source.pk)
         return None
 
     # :returns: list of languages in which stepik_object translation is available

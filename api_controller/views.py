@@ -1,5 +1,4 @@
 import collections
-import json
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from rest_framework import serializers
