@@ -8,19 +8,23 @@ from api_controller.constants import RequestedObject
 from .translation import TranslatedStep, TranslatedLesson, TranslatedCourse, StepSource, TranslatedStepSource
 
 
-# :param: array of texts
-#  make array with escaped symbols (";", "&", "+")
-def escape_symbols(texts):
-    for idx, step_text in enumerate(texts):
-        step_text = step_text.replace(";", "%3B")
-        step_text = step_text.replace("&", "%26")
-        step_text = step_text.replace("+", "%2B")
-        texts[idx] = step_text
+# :param: string
+#  make text with encoded symbols (";", "&", "+", "%")
+def encode_symbols(text):
+    text = text.replace(";", "%3B")
+    text = text.replace("&", "%26")
+    text = text.replace("+", "%2B")
+    text = text.replace("%", "%25")
+    return text
 
 
-# :param array of texts
-# delete accidently happened commas. E.g. "Blue, Sky, Orage" -> "Blue SKy, Orange" -> ["Blue", "Sky,", "Orange"]
-def delete_strange_semicolons(texts):
+# Strange commas appear in such situations:
+# text "Blue, Sky, Orange" -> Yandex received text "Blue Sky, Orange" ->
+# we got an array as input ["Blue", "Sky,", "Orange"]
+#
+# :param array of strings
+# delete accidentally happened commas.
+def delete_strange_commas(texts):
     for idx, text in enumerate(texts):
         if len(text.split()) == 1:
             texts[idx] = text.strip(',')
@@ -57,24 +61,25 @@ class YandexTranslator(object):
                     new_text = []
                     for text_pair in text:
                         new_text.extend(list(text_pair))
-                    escape_symbols(new_text)
+                    new_text = [encode_symbols(x) for x in new_text]
                     text = " ".join(new_text)
                     params.append("&{0}={1}".format("text", text))
                     response = requests.get(final_url + "".join(params)).json()
                     translated_texts = [x.strip() for x in response['text'][0].split(' ')]
-                    delete_strange_semicolons(translated_texts)
+                    delete_strange_commas(translated_texts)
                     ret = []
                     for i in range(0, len(translated_texts), 2):
                         ret.append((translated_texts[i], translated_texts[i + 1]))
                     return ret
                 else:
+                    text = [encode_symbols(x) for x in text]
                     text = " ".join(text)
                     params.append("&{0}={1}".format("text", text))
                     response = requests.get(final_url + "".join(params)).json()
                     translated_texts = [x.strip() for x in response['text'][0].split(' ')]
-                    return delete_strange_semicolons(translated_texts)
+                    return delete_strange_commas(translated_texts)
             else:
-                params.append("&{0}={1}".format("text", text))
+                params.append("&{0}={1}".format("text", encode_symbols(text)))
                 response = requests.get(final_url + "".join(params)).json()
                 # we use response['text'][0] as response['text'] is an array always consisting of 1 element
                 return " ".join(response['text'][0])
