@@ -8,3 +8,4 @@ class RequestedObject(Enum):
     LESSON = 'lesson'
     STEP_SOURCE = 'step-source'
     SERVICE = 'service'
+    ATTEMPT = 'attempt'

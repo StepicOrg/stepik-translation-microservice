@@ -1,3 +1,4 @@
+import collections
 from datetime import datetime
 
 import requests
@@ -49,15 +50,17 @@ class ApiController(SingletonModel):
                                  data={'grant_type': 'client_credentials'},
                                  auth=auth)
         self.token = response.json().get('access_token', None)
+        print(response.json())
         if not self.token:
             return False
         return True
 
     # :returns stepik_object or None if any errors occured during call STEPIK API
-    def fetch_stepik_object(self, obj_class, obj_id):
+    def fetch_stepik_object(self, obj_class, obj_id, token=None):
+        token = token if token else self.token
         api_url = '{}/api/{}s/{}'.format(self.api_host, obj_class, obj_id)
         response = requests.get(api_url,
-                                headers={'Authorization': 'Bearer ' + self.token}).json()
+                                headers={'Authorization': 'Bearer ' + token}).json()
         if '{}s'.format(obj_class) in response:
             return response['{}s'.format(obj_class)][0]
         return None
@@ -196,8 +199,28 @@ class ApiController(SingletonModel):
                                                                   stepik_step_source["block"]["name"]))
             return TranslatedStepSource.objects.filter(pk=step_source.pk)
 
+        elif obj_type is RequestedObject.ATTEMPT:
+            stepik_step_attempt = self.fetch_stepik_object(obj_type.value, pk, token=kwargs["access-token"])
+            if stepik_step_attempt is None:
+                return None
+            step_source_id = stepik_step_attempt["step"]
+            stepik_step_source = self.get_translation(RequestedObject.STEP_SOURCE, step_source_id,
+                                                      service_name=service_name, lang=lang)
+            translated_source = None
+            if stepik_step_source is StepSource.MATCHING:
+                translated_source = None
+            elif stepik_step_source is StepSource.CHOICE:
+                translated_source = None
+            attempt = collections.OrderedDict([
+                ('id', stepik_step_attempt["id"]),
+                ('dataset', translated_source),
+                ('step', step_source_id),
+            ])
+
+            return attempt
+
     # :returns queryset translation or None if params are bad
-    def get_translation(self, obj_type, pk, service_name=None, lang=None):
+    def get_translation(self, obj_type, pk, service_name=None, lang=None, **kwargs):
         result = None
         if service_name is None:
             if obj_type is RequestedObject.STEP:
@@ -211,6 +234,8 @@ class ApiController(SingletonModel):
                 result = TranslatedCourse.objects.filter(stepik_id=pk)
             elif obj_type is RequestedObject.STEP_SOURCE:
                 result = TranslatedStepSource.objects.filter(stepik_id=pk)
+            elif obj_type is RequestedObject.ATTEMPT:
+                result = self.create_translation(obj_type, pk, service_name, lang, kwargs["access_token"])
         else:
             translation_service = self.get_service(service_name)
             if not translation_service:
@@ -223,6 +248,8 @@ class ApiController(SingletonModel):
                 result = translation_service.get_course_translation(pk)
             elif obj_type == RequestedObject.STEP_SOURCE:
                 result = translation_service.get_step_source_translation(pk, lang)
+            elif obj_type is RequestedObject.ATTEMPT:
+                result = self.create_translation(obj_type, pk, service_name, lang, kwargs["access_token"])
         if result is None or result.exists() == 0:
             return None
         return result

@@ -32,6 +32,7 @@ class BasicApiViewSet(viewsets.GenericViewSet):
             params["obj_type"] = None
         params["service_name"] = self.request.query_params.get("service_name", None)
         params["lang"] = self.request.query_params.get("lang", None)
+        params["access_token"] = self.request.query_params.get("access_token", None)
         return params
 
     def get_type_object(self):
@@ -40,7 +41,7 @@ class BasicApiViewSet(viewsets.GenericViewSet):
     def get_record(self, **kwargs):
         api_controller = ApiController.load()
         return api_controller.get_translation(self.get_type_object(), kwargs["pk"], kwargs["service_name"],
-                                              kwargs["lang"])
+                                              kwargs["lang"], kwargs["access_token"])
 
     def get_records(self, **kwargs):
         pass
@@ -113,6 +114,12 @@ class BasicApiViewSet(viewsets.GenericViewSet):
             if not v and k is not "obj_type":
                 return False
         return True
+
+    def check_access_level(self):
+        params = self.get_params()
+        if "access_token" not in params:
+            return Response({'detail': 'You do not have permission to perform this action.'},
+                            status=status.HTTP_403_FORBIDDEN)
 
 
 class TranslatedStepViewSet(BasicApiViewSet):
@@ -235,3 +242,22 @@ class TranslatedStepSourceViewSet(BasicApiViewSet):
             return self.error_response(404)
         serializer = self.get_serializer(instance=data, many=True)
         return Response(serializer.data)
+
+
+class TranslatedAttemptViewSet(BasicApiViewSet):
+    def get_type_object(self):
+        return RequestedObject.ATTEMPT
+
+    def retrieve(self, request, pk=None):
+        self.check_access_level()
+        obj = self.get_queryset()
+        if obj is None:
+            return self.error_response(404)
+        meta = collections.OrderedDict([
+            ('page', 1),
+            ('has_next', False),
+            ('has_previous', False),
+        ])
+        ret = collections.OrderedDict(meta=meta)
+        ret["attempts"] = obj
+        return Response(ret)
