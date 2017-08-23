@@ -24,10 +24,16 @@ def encode_symbols(text):
 #
 # :param array of strings
 # delete accidentally happened commas.
-def delete_strange_commas(texts):
+def delete_strange_commas_and_words(texts):
+    new_texts = []
     for idx, text in enumerate(texts):
-        if len(text.split()) == 1:
-            texts[idx] = text.strip(',')
+        if text.lower() in ["the", "a", "an"]:
+            continue
+        elif len(text.split()) == 1:
+            new_texts.append(text.strip(','))
+        else:
+            new_texts.append(text)
+    return new_texts
 
 
 class GoogleTranslator(object):
@@ -66,7 +72,7 @@ class YandexTranslator(object):
                     params.append("&{0}={1}".format("text", text))
                     response = requests.get(final_url + "".join(params)).json()
                     translated_texts = [x.strip() for x in response['text'][0].split(' ')]
-                    delete_strange_commas(translated_texts)
+                    translated_texts = delete_strange_commas_and_words(translated_texts)
                     ret = []
                     for i in range(0, len(translated_texts), 2):
                         ret.append((translated_texts[i], translated_texts[i + 1]))
@@ -77,7 +83,8 @@ class YandexTranslator(object):
                     params.append("&{0}={1}".format("text", text))
                     response = requests.get(final_url + "".join(params)).json()
                     translated_texts = [x.strip() for x in response['text'][0].split(' ')]
-                    return delete_strange_commas(translated_texts)
+
+                    return delete_strange_commas_and_words(translated_texts)
             else:
                 params.append("&{0}={1}".format("text", encode_symbols(text)))
                 response = requests.get(final_url + "".join(params)).json()
@@ -181,6 +188,24 @@ class TranslationService(models.Model):
             pairs = [collections.OrderedDict([('first', text[0]), ('second', text[1])]) for text in texts]
             json["pairs"] = pairs
         return json
+
+    def create_step_source_dict(self, source, translated_options, source_type):
+        dict = {}
+        if source_type == StepSource.CHOICE:
+            texts = [option["text"] for option in source["options"]]
+            translated_texts = [option["text"] for option in translated_options["options"]]
+            for i in range(len(texts)):
+                dict[texts[i]] = translated_texts[i]
+        elif source_type == StepSource.MATCHING:
+            texts = []
+            for pair in source["pairs"]:
+                texts.extend([pair["first"], pair["second"]])
+            translated_texts = []
+            for pair in translated_options["pairs"]:
+                translated_texts.extend([pair["first"], pair["second"]])
+            for i in range(len(texts)):
+                dict[texts[i]] = translated_texts[i]
+        return dict
 
     # :returns: json of languages used in step's translation for obj_type instance
     def get_available_languages(self, pk, obj_type):
