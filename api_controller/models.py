@@ -282,7 +282,7 @@ class ApiController(SingletonModel):
             for id, pair in enumerate(dataset["pairs"]):
                 word, second_word = dataset["pairs"][id]["first"], dataset["pairs"][id]["second"]
                 dataset["pairs"][id]["first"] = translation_dict[word]
-                dataset["pairs"][id]["second"] = second_word
+                dataset["pairs"][id]["second"] = translation_dict[second_word]
         elif stepik_step_source.type is StepSource.CHOICE:
             for id, option in enumerate(dataset["options"]):
                 dataset["options"][id] = translation_dict[option]
