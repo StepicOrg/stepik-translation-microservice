@@ -1,4 +1,5 @@
 import collections
+import copy
 from datetime import datetime
 
 import requests
@@ -44,20 +45,19 @@ class ApiController(SingletonModel):
         return datetime.strptime(str, "%Y-%m-%dT%H:%M:%SZ")
 
     def stepik_oauth(self):
-
         auth = requests.auth.HTTPBasicAuth(self.oauth_credentials["client_id"], self.oauth_credentials["client_secret"])
         response = requests.post('https://stepik.org/oauth2/token/',
                                  data={'grant_type': 'client_credentials'},
                                  auth=auth)
         self.token = response.json().get('access_token', None)
-        print(response.json())
         if not self.token:
             return False
         return True
 
     # :returns stepik_object or None if any errors occured during call STEPIK API
     def fetch_stepik_object(self, obj_class, obj_id, token=None):
-        token = token if token else self.token
+        # TODO change token
+        token = "bfyeLf2bkemUS2j8I9BPO3z6iQlPHo"
         api_url = '{}/api/{}s/{}'.format(self.api_host, obj_class, obj_id)
         response = requests.get(api_url,
                                 headers={'Authorization': 'Bearer ' + token}).json()
@@ -188,36 +188,22 @@ class ApiController(SingletonModel):
             stepik_step_source = self.fetch_stepik_object(obj_type.value, pk)
             if stepik_step_source is None:
                 return None
-            translated_source = translation_service.create_step_source_translation(
-                stepik_step_source['block']['source'],
-                lang, StepSource.convert_to_choice(stepik_step_source["block"]["name"]))
-            datetime_obj = self.from_str_to_datetime(stepik_step_source['update_date'])
-            step_source = TranslatedStepSource.objects.create(stepik_id=pk, lang=lang, service_name=service_name,
-                                                              source=translated_source,
-                                                              stepik_update_date=datetime_obj,
-                                                              type=StepSource.convert_to_choice(
-                                                                  stepik_step_source["block"]["name"]))
-            return TranslatedStepSource.objects.filter(pk=step_source.pk)
 
-        elif obj_type is RequestedObject.ATTEMPT:
-            stepik_step_attempt = self.fetch_stepik_object(obj_type.value, pk, token=kwargs["access-token"])
-            if stepik_step_attempt is None:
-                return None
-            step_source_id = stepik_step_attempt["step"]
-            stepik_step_source = self.get_translation(RequestedObject.STEP_SOURCE, step_source_id,
-                                                      service_name=service_name, lang=lang)
-            translated_source = None
-            if stepik_step_source is StepSource.MATCHING:
-                translated_source = None
-            elif stepik_step_source is StepSource.CHOICE:
-                translated_source = None
-            attempt = collections.OrderedDict([
-                ('id', stepik_step_attempt["id"]),
-                ('dataset', translated_source),
-                ('step', step_source_id),
-            ])
+            source_type = StepSource.convert_to_choice(stepik_step_source['block']['name'])
+            source = copy.deepcopy(stepik_step_source['block']['source'])
 
-            return attempt
+            translated_source = translation_service.create_step_source_translation(source, lang, source_type)
+            translation_dict = translation_service.create_step_source_dict(stepik_step_source['block']['source'],
+                                                                           translated_source, source_type)
+            print(stepik_step_source['block']['source'], translated_source)
+            datetime_obj = datetime.strptime(stepik_step_source['update_date'], "%Y-%m-%dT%H:%M:%SZ")
+            translated_step_source = TranslatedStepSource.objects.create(lang=lang, stepik_id=pk,
+                                                                         service_name=service_name,
+                                                                         translation_dict=translation_dict,
+                                                                         source=translated_source,
+                                                                         stepik_update_date=datetime_obj,
+                                                                         type=source_type)
+            return TranslatedStepSource.objects.filter(pk=translated_step_source.pk)
 
     # :returns queryset translation or None if params are bad
     def get_translation(self, obj_type, pk, service_name=None, lang=None, **kwargs):
@@ -234,8 +220,6 @@ class ApiController(SingletonModel):
                 result = TranslatedCourse.objects.filter(stepik_id=pk)
             elif obj_type is RequestedObject.STEP_SOURCE:
                 result = TranslatedStepSource.objects.filter(stepik_id=pk)
-            elif obj_type is RequestedObject.ATTEMPT:
-                result = self.create_translation(obj_type, pk, service_name, lang, kwargs["access_token"])
         else:
             translation_service = self.get_service(service_name)
             if not translation_service:
@@ -248,8 +232,6 @@ class ApiController(SingletonModel):
                 result = translation_service.get_course_translation(pk)
             elif obj_type == RequestedObject.STEP_SOURCE:
                 result = translation_service.get_step_source_translation(pk, lang)
-            elif obj_type is RequestedObject.ATTEMPT:
-                result = self.create_translation(obj_type, pk, service_name, lang, kwargs["access_token"])
         if result is None or result.exists() == 0:
             return None
         return result
@@ -278,6 +260,39 @@ class ApiController(SingletonModel):
         if not translation_service:
             return None
         return translation_service.get_available_languages(pk, obj_type)
+
+    def get_translated_attempt(self, pk, service_name, lang, access_token):
+        stepik_step_attempt = self.fetch_stepik_object(RequestedObject.ATTEMPT.value, pk, token=access_token)
+        if stepik_step_attempt is None:
+            return None
+
+        step_source_id = stepik_step_attempt["step"]
+        stepik_step_source = self.get_translation(RequestedObject.STEP_SOURCE, step_source_id,
+                                                  service_name=service_name, lang=lang)
+        if stepik_step_source is None:
+            stepik_step_source = self.create_translation(RequestedObject.STEP_SOURCE, step_source_id,
+                                                         service_name=service_name, lang=lang).first()
+        else:
+            stepik_step_source = stepik_step_source.first()
+
+        translation_dict = stepik_step_source.translation_dict
+        dataset = stepik_step_attempt["dataset"]
+
+        if stepik_step_source.type is StepSource.MATCHING:
+            for id, pair in enumerate(dataset["pairs"]):
+                word, second_word = dataset["pairs"][id]["first"], dataset["pairs"][id]["second"]
+                dataset["pairs"][id]["first"] = translation_dict[word]
+                dataset["pairs"][id]["second"] = second_word
+        elif stepik_step_source.type is StepSource.CHOICE:
+            for id, option in enumerate(dataset["options"]):
+                dataset["options"][id] = translation_dict[option]
+
+        attempt = collections.OrderedDict([
+            ('id', stepik_step_attempt["id"]),
+            ('step', step_source_id),
+            ('dataset', dataset),
+        ])
+        return attempt
 
     # :returns: float percent indicating what part of stepik_object is translated in given language
     def get_translational_ratio(self, pk, obj_type, lang=None, service_name=None):

@@ -49,6 +49,7 @@ class TranslatedStepSource(Translation):
     lang = models.CharField(max_length=10, blank=False)
     type = EnumField(StepSource)
     source = JSONField()
+    translation_dict = JSONField()
 
 
 @receiver(post_save, sender=TranslatedStep, dispatch_uid="update_lesson_date")

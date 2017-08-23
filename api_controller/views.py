@@ -41,7 +41,7 @@ class BasicApiViewSet(viewsets.GenericViewSet):
     def get_record(self, **kwargs):
         api_controller = ApiController.load()
         return api_controller.get_translation(self.get_type_object(), kwargs["pk"], kwargs["service_name"],
-                                              kwargs["lang"], kwargs["access_token"])
+                                              kwargs["lang"], access_token=kwargs["access_token"])
 
     def get_records(self, **kwargs):
         pass
@@ -101,7 +101,8 @@ class BasicApiViewSet(viewsets.GenericViewSet):
         if number_error == 404:
             return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
         elif number_error == 403:
-            return Response({'detail': 'Action Forbidden.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'detail': 'You do not have permission to perform this action.'},
+                            status=status.HTTP_403_FORBIDDEN)
 
     def success_response(self, number_success):
         if number_success == 201:
@@ -114,12 +115,6 @@ class BasicApiViewSet(viewsets.GenericViewSet):
             if not v and k is not "obj_type":
                 return False
         return True
-
-    def check_access_level(self):
-        params = self.get_params()
-        if "access_token" not in params:
-            return Response({'detail': 'You do not have permission to perform this action.'},
-                            status=status.HTTP_403_FORBIDDEN)
 
 
 class TranslatedStepViewSet(BasicApiViewSet):
@@ -248,8 +243,14 @@ class TranslatedAttemptViewSet(BasicApiViewSet):
     def get_type_object(self):
         return RequestedObject.ATTEMPT
 
+    def get_record(self, **kwargs):
+        api_controller = ApiController.load()
+        return api_controller.get_translated_attempt(kwargs["pk"], kwargs["service_name"], kwargs["lang"],
+                                                     kwargs["access_token"])
+
     def retrieve(self, request, pk=None):
-        self.check_access_level()
+        if self.get_params()["access_token"] is None:
+            return self.error_response(403)
         obj = self.get_queryset()
         if obj is None:
             return self.error_response(404)
