@@ -57,7 +57,7 @@ class ApiController(SingletonModel):
     # :returns stepik_object or None if any errors occured during call STEPIK API
     def fetch_stepik_object(self, obj_class, obj_id, token=None):
         # TODO change token
-        token = "bfyeLf2bkemUS2j8I9BPO3z6iQlPHo"
+        token = token if token else self.token
         api_url = '{}/api/{}s/{}'.format(self.api_host, obj_class, obj_id)
         response = requests.get(api_url,
                                 headers={'Authorization': 'Bearer ' + token}).json()
@@ -191,12 +191,11 @@ class ApiController(SingletonModel):
 
             source_type = StepSource.convert_to_choice(stepik_step_source['block']['name'])
             source = copy.deepcopy(stepik_step_source['block']['source'])
-
             translated_source = translation_service.create_step_source_translation(source, lang, source_type)
             translation_dict = translation_service.create_step_source_dict(stepik_step_source['block']['source'],
                                                                            translated_source, source_type)
-            print(stepik_step_source['block']['source'], translated_source)
             datetime_obj = datetime.strptime(stepik_step_source['update_date'], "%Y-%m-%dT%H:%M:%SZ")
+
             translated_step_source = TranslatedStepSource.objects.create(lang=lang, stepik_id=pk,
                                                                          service_name=service_name,
                                                                          translation_dict=translation_dict,

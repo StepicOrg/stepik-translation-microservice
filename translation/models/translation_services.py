@@ -23,8 +23,8 @@ def encode_symbols(text):
 # we got an array as input ["Blue", "Sky,", "Orange"]
 #
 # :param array of strings
-# delete accidentally happened commas.
-def delete_strange_commas_and_words(texts):
+# delete accidentally happened commas and articles
+def clear_text(texts):
     new_texts = []
     for idx, text in enumerate(texts):
         if text.lower() in ["the", "a", "an"]:
@@ -72,7 +72,7 @@ class YandexTranslator(object):
                     params.append("&{0}={1}".format("text", text))
                     response = requests.get(final_url + "".join(params)).json()
                     translated_texts = [x.strip() for x in response['text'][0].split(' ')]
-                    translated_texts = delete_strange_commas_and_words(translated_texts)
+                    translated_texts = clear_text(translated_texts)
                     ret = []
                     for i in range(0, len(translated_texts), 2):
                         ret.append((translated_texts[i], translated_texts[i + 1]))
@@ -84,7 +84,7 @@ class YandexTranslator(object):
                     response = requests.get(final_url + "".join(params)).json()
                     translated_texts = [x.strip() for x in response['text'][0].split(' ')]
 
-                    return delete_strange_commas_and_words(translated_texts)
+                    return clear_text(translated_texts)
             else:
                 params.append("&{0}={1}".format("text", encode_symbols(text)))
                 response = requests.get(final_url + "".join(params)).json()
