@@ -13,7 +13,7 @@ services:
     # The command is tweaked to allow the local server to be accessed
     # by cross-origin requests (by binding to system IP 0.0.0.0 rather than localhost).
     # See: https://stackoverflow.com/questions/5768797/manage-py-runserver
-    command: python manage.py runserver 0.0.0.0:8000
+    command: bash -c 'python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000'
 
 
   # Technically, we could access the server using port 8000 without in dev.
