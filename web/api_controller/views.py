@@ -76,7 +76,6 @@ class BasicApiViewSet(viewsets.GenericViewSet):
         # TODO put it in another place
         api_controller.stepik_oauth()
         params = self.get_params()
-
         if not self.check_required_params(params):
             return self.error_response(404)
 

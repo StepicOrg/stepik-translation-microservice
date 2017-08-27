@@ -33,8 +33,6 @@ services:
     image: postgres:latest
     ports:
       - "5432:5432"
-    environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=clever_pass
+    env_file: ./web/translation_microservice/.env
     volumes:
       - /var/lib/postgresql/data/
