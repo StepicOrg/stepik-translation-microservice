@@ -72,10 +72,10 @@ WSGI_APPLICATION = 'translation_microservice.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env("POSTGRESQL_DATABASE"),
-        'USER': env("POSTGRESQL_USERNAME"),
-        'PASSWORD': env("POSTGRESQL_PASSWORD"),
-        'HOST': env("POSTGRESQL_ADDRESS"),
+        'NAME': env("POSTGRES_DB"),
+        'USER': env("POSTGRES_USER"),
+        'PASSWORD': env("POSTGRES_PASSWORD"),
+        'HOST': env("POSTGRES_ADDRESS"),
         'PORT': 5432
     }
 }
