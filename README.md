@@ -5,7 +5,7 @@ API endpoints are listed on TODO.
 You can find comparison of translation service API on this page: TODO. <br>
 **TL;DR**: Azure with Yandex have slightly better translation than Google. It was tested on language pair: ru -> en.
 
-# Starting Development
+## Starting Development
 
 **Setup your Docker environment**
 
@@ -55,10 +55,10 @@ Unfortunately after starting `docker-compose` we have to run following commands.
 ```
 One more command to run for correct admin pages displaying: `$ docker-compose run --rm web python manage.py collectstatic --no-input`
 
-# Admin access
+## Admin access
 If you want to help Stepik with materials translation or gain admin access for this microservice, please write email on maxim.averin@stepik.org.
 
-# TODO
+## TODO
 
 * make a link to swagger
 * move additional commands info Dockerfile
