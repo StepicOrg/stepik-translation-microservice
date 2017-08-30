@@ -13,6 +13,7 @@ private:
 * *UPDATE* `steps/<stepik_id>/?lang=<>&text=<>&service_name=<>` - update translated step's text
 * *POST* `steps/<stepik_id>/?lang=<>&service_name=<>` - create translated step's text
 
+Private methods should be accessed with `admin_token`
 
 **/api/translation-ratio**
 * *GET* `lesson/<stepik_id>/?lang=<>&service_name=<>` - get `translation_ratio` of specific lesson
@@ -23,4 +24,4 @@ private:
 * *GET* `lessons/<stepik_id>/?service_name=<>` - get `available-languages` for lesson
 * *GET* `steps/<stepik_id>/?service_name=<>` - get `available-languages` for step
 
-Private methods should be accessed with `admin_token`
+
