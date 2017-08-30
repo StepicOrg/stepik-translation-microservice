@@ -1,4 +1,4 @@
-**/api/translate**
+**/api/translation**
 
 public:
 
@@ -6,6 +6,7 @@ public:
 * *GET* `lessons/<stepik_id>/?lang=<>&service_name=<>` - get specific lesson
 * *GET* `steps/?page=<>&lang=<>&service_name=<>` - get all translated steps
 * *GET* `steps/<stepik_id>/?lang=<>&service_name=<>` - get specific step
+* *GET* `attempts/<stepik_id>/?service_name=<>&access_token=<>` - get specific attempt, access_token is required (you can get it [here](https://stepik.org/oauth2/applications/))
 
 private:
 
@@ -22,6 +23,4 @@ private:
 * *GET* `lessons/<stepik_id>/?service_name=<>` - get `available-languages` for lesson
 * *GET* `steps/<stepik_id>/?service_name=<>` - get `available-languages` for step
 
-
-Optional params for requests: `lang` and `service_name`
-Future support: `ids`
+Private methods should be accessed with `admin_token`
