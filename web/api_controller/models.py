@@ -154,8 +154,9 @@ class ApiController(SingletonModel):
                 return None
 
             lesson = None
+            translation = translation.first() if translation else None
             # if lesson already exists, but we didn't translate all steps
-            if translation and translation.first().steps.filter(lang=lang).count() != translation.steps_count:
+            if translation and translation.steps.filter(lang=lang).count() != translation.steps_count:
                 lesson = translation
             else:
                 datetime_obj = datetime.strptime(stepik_lesson['update_date'], "%Y-%m-%dT%H:%M:%SZ")
@@ -166,7 +167,8 @@ class ApiController(SingletonModel):
                 lesson.course = kwargs["course"]
                 lesson.save()
             texts = self.steps_text_with_dates(stepik_lesson['steps'])
-            translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
+            if texts:
+                translation_service.create_lesson_translation(pk, stepik_lesson['steps'], texts, lang=lang)
             return TranslatedLesson.objects.filter(pk=lesson.pk)
         elif obj_type is RequestedObject.COURSE:
             # we create lesson only here
