@@ -12,6 +12,7 @@ from .translation import TranslatedStep, TranslatedLesson, TranslatedCourse, Ste
 #  make text with encoded symbols (";", "&", "+", "%")
 def encode_symbols(text):
     text = text.replace(";", "%3B")
+    text = text.replace("#", "%23")
     text = text.replace("&", "%26")
     text = text.replace("+", "%2B")
     text = text.replace("%", "%25")
@@ -89,7 +90,7 @@ class YandexTranslator(object):
                 params.append("&{0}={1}".format("text", encode_symbols(text)))
                 response = requests.get(final_url + "".join(params)).json()
                 # we use response['text'][0] as response['text'] is an array always consisting of 1 element
-                return " ".join(response['text'][0])
+                return "".join(response['text'][0])
         return ""
 
 
