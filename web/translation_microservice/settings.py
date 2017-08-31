@@ -1,19 +1,15 @@
 import os
 import environ
 
-# Import .env to settings.py
-
-env = environ.Env()
-environ.Env.read_env()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG', default=False)
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -72,10 +68,10 @@ WSGI_APPLICATION = 'translation_microservice.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env("POSTGRES_DB"),
-        'USER': env("POSTGRES_USER"),
-        'PASSWORD': env("POSTGRES_PASSWORD"),
-        'HOST': env("POSTGRES_ADDRESS"),
+        'NAME': os.environ.get("POSTGRES_DB"),
+        'USER': os.environ.get("POSTGRES_USER"),
+        'PASSWORD': os.environ.get("POSTGRES_PASSWORD"),
+        'HOST': os.environ.get("POSTGRES_ADDRESS"),
         'PORT': 5432
     }
 }
@@ -119,16 +115,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
+STATIC_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static'))
 STATIC_URL = '/static/'
 
 # Credentials for translate services
 
-YANDEX_API_KEY = env("YANDEX_API_KEY")
+YANDEX_API_KEY = os.environ.get("YANDEX_API_KEY")
 
-GOOGLE_API_KEY = env("GOOGLE_API_KEY", default="")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", default="")
 
-AZURE_API_KEY = env("AZURE_API_KEY", default="")
+AZURE_API_KEY = os.environ.get("AZURE_API_KEY", default="")
 
-STEPIK_CLIENT_ID = env("STEPIK_CLIENT_ID")
+STEPIK_CLIENT_ID = os.environ.get("STEPIK_CLIENT_ID")
 
-STEPIK_CLIENT_SECRET = env("STEPIK_CLIENT_SECRET")
+STEPIK_CLIENT_SECRET = os.environ.get("STEPIK_CLIENT_SECRET")
