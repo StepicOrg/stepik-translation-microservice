@@ -3,7 +3,7 @@ version: '3'
 services:
   web:
     build: ./web # specify the directory, where Dockerfile is
-    env_file: ./web/translation_microservice/.env
+    env_file: ./web/.env
     volumes:
       - ./web:/code/
     depends_on:
@@ -33,6 +33,6 @@ services:
     image: postgres:latest
     ports:
       - "5432:5432"
-    env_file: ./web/translation_microservice/.env
+    env_file: ./web/.env
     volumes:
       - /var/lib/postgresql/data/
