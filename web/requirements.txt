@@ -1,7 +1,7 @@
-Django==1.11.3
+Django==1.11.16
 django-environ==0.4.3
 djangorestframework==3.6.3
 inflection==0.3.1
 psycopg2==2.7.1
-requests==2.18.1
+requests==2.20.1
 django-enumfields==0.9.0
